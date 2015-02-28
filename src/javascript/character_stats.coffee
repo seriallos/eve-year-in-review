@@ -286,8 +286,7 @@ class CharacterStats
       name: "Manufacturing Jobs"
       description: "The total number of manufacturing jobs completed"
     industryRamJobsCompletedManufactureAsteroidQuantity:
-      # TODO
-      name: "Asteroids Manufactured?"
+      name: "Mineral Compression Jobs"
       description: "The total units of"
     industryRamJobsCompletedManufactureChargeQuantity:
       name: "Charges Produced"
@@ -511,16 +510,16 @@ class CharacterStats
       name: "AU Traveled in Wormholes"
       description: "The total distance(AU) traveled in warp while in wormhole space"
     travelWarpsHighSec:
-      names: "Initiated Warp in High Sec"
+      name: "Initiated Warp in High Sec"
       description: "The total number of warps initiated while in high security space"
     travelWarpsLowSec:
-      names: "Initiated Warp in Low Sec"
+      name: "Initiated Warp in Low Sec"
       description: "The total number of warps initiated while in low security space"
     travelWarpsNullSec:
-      names: "Initiated Warp in Null Sec"
+      name: "Initiated Warp in Null Sec"
       description: "The total number of warps initiated while in null security space"
     travelWarpsWormhole:
-      names: "Initiated Warp in Wormholes"
+      name: "Initiated Warp in Wormholes"
       description: "The total number of warps initiated while in wormhole space"
     travelWarpsToBookmark:
       name: "Initiated Warp to Bookmark"
@@ -535,6 +534,7 @@ class CharacterStats
       name: "Initiated Warp to Scan Result"
       description: "The total number of warps initiated to a scan result"
 
+    # derived fields
     combatKillsTotal:
       name: 'Total Kills'
     combatDeathsTotal:
