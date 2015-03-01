@@ -6,6 +6,8 @@ _ = require 'lodash'
 
 dom = React.DOM
 
+source_json = './dscan.json'
+
 # sources of sampled colors
 #   * subcap weapons: http://i.imgur.com/c08RJ.jpg
 STYLES =
@@ -42,6 +44,8 @@ STYLES =
     color: 'white'
     iconId: 3663
 
+HP_BAR_ORDER = ['shield','armor','hull']
+
 StatsUI = React.createClass(
   displayName: 'CharacterStatsUI'
   getInitialState: ->
@@ -53,7 +57,7 @@ StatsUI = React.createClass(
       year: 2014
     }
   componentDidMount: ->
-    $.get './random.json', (data) =>
+    $.get source_json, (data) =>
       stats = new CharacterStats(data)
       @setState {stats: stats}
   render: ->
@@ -170,16 +174,16 @@ SelfRepPanel = React.createClass(
   chartData: ->
     data = [
       {
-        key: 'shield'
-        value: @props.stats?.combatRepairShieldSelfAmount
+        key: 'hull'
+        value: @props.stats?.combatRepairHullSelfAmount
       }
       {
         key: 'armor'
         value: @props.stats?.combatRepairArmorSelfAmount
       }
       {
-        key: 'hull'
-        value: @props.stats?.combatRepairHullSelfAmount
+        key: 'shield'
+        value: @props.stats?.combatRepairShieldSelfAmount
       }
     ]
     return data
@@ -194,16 +198,16 @@ RepsGivenPanel = React.createClass(
   chartData: ->
     data = [
       {
-        key: 'shield'
-        value: @props.stats?.combatRepairShieldRemoteAmount
+        key: 'hull'
+        value: @props.stats?.combatRepairHullRemoteAmount
       }
       {
         key: 'armor'
         value: @props.stats?.combatRepairArmorRemoteAmount
       }
       {
-        key: 'hull'
-        value: @props.stats?.combatRepairHullRemoteAmount
+        key: 'shield'
+        value: @props.stats?.combatRepairShieldRemoteAmount
       }
     ]
     return data
@@ -218,16 +222,16 @@ RepsReceivedPanel = React.createClass(
   chartData: ->
     data = [
       {
-        key: 'shield'
-        value: @props.stats?.combatRepairShieldByRemoteAmount
+        key: 'hull'
+        value: @props.stats?.combatRepairHullByRemoteAmount
       }
       {
         key: 'armor'
         value: @props.stats?.combatRepairArmorByRemoteAmount
       }
       {
-        key: 'hull'
-        value: @props.stats?.combatRepairHullByRemoteAmount
+        key: 'shield'
+        value: @props.stats?.combatRepairShieldByRemoteAmount
       }
     ]
     return data
@@ -243,7 +247,7 @@ PieDataPanel = React.createClass(
     return {
       chartType: 'pie'
     }
-  deriveData: ->
+  deriveData: (sortFn) ->
     tmp = _.clone @props.data
     total = 0
     {value: max} = _.max tmp, (d) -> d.value
@@ -251,13 +255,18 @@ PieDataPanel = React.createClass(
     _.each tmp, (d) ->
       d.percentOfTotal = d.value / total
       d.percentOfMax = d.value / max
-    tmp.sort (a, b) -> return b.value - a.value
+    if sortFn
+      tmp.sort sortFn
     return tmp
   render: ->
-    data = @deriveData()
-    chartElementType = switch @props.chartType
-      when 'pie' then PieChart
-      when 'shipHp' then ShipHPChart
+    switch @props.chartType
+      when 'pie'
+        chartElementType = PieChart
+        sortFn = (a, b) -> return b.value - a.value
+      when 'shipHp'
+        chartElementType = ShipHPChart
+        sortFn = (a, b) -> return HP_BAR_ORDER.indexOf(a.key) - HP_BAR_ORDER.indexOf(b.key)
+    data = @deriveData(sortFn)
     dom.div null,
       dom.div {className: 'col-md-2'},
         React.createElement(chartElementType, {data: data})
@@ -330,31 +339,31 @@ ShipHPChart = React.createClass(
   displayName: 'ShipHPChart'
   getDefaultProps: ->
     return {
-      width: 150
-      height: 150
-      innerRadius: 55
+      width: 200
+      height: 200
     }
   componentDidUpdate: ->
     el = @getDOMNode()
 
-    outerRadius = @props.width / 2
+    radius = 90
+    arcWidth = 7
+    padding = 1
 
-    curOffset = 30
-    arcWidth = 5
-    padding = 5
-    nextOffset = ->
-      cur = curOffset
-      curOffset += arcWidth + padding
-      return cur
+    getOffset = (i) ->
+      return radius - (i * (arcWidth + padding))
 
     arc = d3.svg.arc()
-                .innerRadius (d) -> nextOffset()
-                .outerRadius (d) -> curOffset - padding
-                .startAngle -(Math.PI / 2)
-                .endAngle (d) -> d.percentOfMax * (Math.PI / 2)
+                .innerRadius (d, i) -> getOffset(i) - arcWidth
+                .outerRadius (d, i) -> getOffset(i)
+                .startAngle -(Math.PI/2)
+                .endAngle (d) -> (d.percentOfMax * (Math.PI)) - (Math.PI/2)
+    hullArc = d3.svg.arc()
+                .innerRadius (d, i) -> getOffset(i) - arcWidth
+                .outerRadius (d, i) -> getOffset(i)
+                .startAngle -(Math.PI/2)
+                .endAngle (d) -> Math.PI/2
 
     data = @props.data
-    console.log data
 
     svg = d3.select(el).append('svg')
             .attr 'width', @props.width
@@ -364,7 +373,11 @@ ShipHPChart = React.createClass(
               .data data
               .enter()
               .append 'g'
-              .attr 'transform', "translate(#{outerRadius},#{outerRadius})"
+              .attr 'transform', "translate(#{radius},#{radius})"
+
+    arcs.append 'path'
+        .attr 'fill', 'red'
+        .attr 'd', hullArc
 
     arcs.append 'path'
         .attr 'fill', (d) -> STYLES[d.key]?.color
