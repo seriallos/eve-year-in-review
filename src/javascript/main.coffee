@@ -1,3 +1,11 @@
+
+
+# Ideas
+# * Damage represented by ship icon (relative EHP)
+#   * Silhoette icon, standard EHP on a PVP fit
+# * Stat per minute (any stat divided by active minutes)
+
+
 React = require 'react'
 $ = require 'jquery'
 CharacterStats = require './character_stats'
@@ -7,6 +15,18 @@ _ = require 'lodash'
 dom = React.DOM
 
 source_json = './dscan.json'
+
+samples = [
+  'dscan.json'
+  'explorer.json'
+  'industry.json'
+  'lowsec.json'
+  'market.json'
+  'miner.json'
+  'missions.json'
+  'random.json'
+]
+
 
 # sources of sampled colors
 #   * subcap weapons: http://i.imgur.com/c08RJ.jpg
@@ -43,6 +63,18 @@ STYLES =
     label: 'Hull'
     color: 'white'
     iconId: 3663
+  high:
+    label: 'High Sec'
+    color: '#11ee11'
+  low:
+    label: 'Low Sec'
+    color: '#dfdf00'
+  null:
+    label: 'Null Sec'
+    color: '#df0000'
+  wormhole:
+    label: 'Wormholes'
+    color: '#0000df'
 
 HP_BAR_ORDER = ['shield','armor','hull']
 
@@ -55,9 +87,10 @@ StatsUI = React.createClass(
         name: 'Bellatroix'
         id: 1412571394
       year: 2014
+      source: './explorer.json'
     }
   componentDidMount: ->
-    $.get source_json, (data) =>
+    $.get @state.source, (data) =>
       stats = new CharacterStats(data)
       @setState {stats: stats}
   render: ->
@@ -76,12 +109,14 @@ StatsUI = React.createClass(
     charInfoPanel = React.createElement(CharacterInfoPanel, {character: @state.character})
     weaponUsagePanel = React.createElement(WeaponUsagePanel, {stats: @state.stats})
     damageTakenPanel = React.createElement(DamageTakenPanel, {stats: @state.stats})
+    travelPanel = React.createElement(TravelPanel, {stats: @state.stats})
     selfRepPanel = React.createElement(SelfRepPanel, {stats: @state.stats})
     repsReceivedPanel = React.createElement(RepsReceivedPanel, {stats: @state.stats})
     repsGivenPanel = React.createElement(RepsGivenPanel, {stats: @state.stats})
     rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
     dom.div {className: 'container'},
       charInfoPanel
+      travelPanel
       weaponUsagePanel
       damageTakenPanel
       selfRepPanel
@@ -241,6 +276,34 @@ RepsReceivedPanel = React.createClass(
         React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp'})
 )
 
+TravelPanel = React.createClass(
+  displayName: 'TravelPanel'
+  chartData: ->
+    data = [
+      {
+        key: 'high'
+        value: @props.stats?.travelJumpsStargateHighSec
+      }
+      {
+        key: 'low'
+        value: @props.stats?.travelJumpsStargateLowSec
+      }
+      {
+        key: 'null'
+        value: @props.stats?.travelJumpsStargateNullSec
+      }
+      {
+        key: 'wormhole'
+        value: @props.stats?.travelJumpsWormhole
+      }
+    ]
+    return data
+  render: ->
+    dom.div {className: 'container'},
+      dom.h3 null, 'Stargate / Wormhole Jumps'
+        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'pie'})
+)
+
 PieDataPanel = React.createClass(
   displayName: 'PieDataPanel'
   getDefaultProps: ->
@@ -286,8 +349,8 @@ PieDataTable = React.createClass(
       return dom.tr {key: d.key},
         iconCell
         dom.td null, STYLES[d.key]?.label
-        dom.td null, d.value
-        dom.td null, d3.round(100*d.percentOfTotal,2)+'%'
+        dom.td null, Intl.NumberFormat().format(d.value)
+        dom.td null, d3.round(100*d.percentOfTotal,0)+'%'
     dom.table {className: 'table'},
       dom.tbody null,
         rows
@@ -312,7 +375,7 @@ PieChart = React.createClass(
 
     pie = d3.layout.pie()
             .value (d) -> d.value
-            .padAngle Math.PI / 100
+            .padAngle Math.PI / 200
 
     data = pie(@props.data)
 
