@@ -4,23 +4,30 @@
 # * Damage represented by ship icon (relative EHP)
 #   * Silhoette icon, standard EHP on a PVP fit
 # * Stat per minute (any stat divided by active minutes)
+# AU breakdown (distance to different galaxies, amount of years at speed of light)
 
+# TODO
+# * H/L/N/W colors
+# * More/better raw stat formatters (minutes to H:M, etc)
+# * tick marks on HP Chart
 
 React = require 'react'
 $ = require 'jquery'
 CharacterStats = require './character_stats'
+CharacterFacts = require './character_facts'
 d3 = require 'd3'
 _ = require 'lodash'
 
 dom = React.DOM
 
-source_json = './dscan.json'
+source_json = './lowsec.json'
 
 samples = [
   'dscan.json'
   'explorer.json'
   'industry.json'
   'lowsec.json'
+  'null_pvp.json'
   'market.json'
   'miner.json'
   'missions.json'
@@ -51,6 +58,18 @@ STYLES =
     label: 'Bomb'
     color: 'red'
     iconId: 27920
+  smartbomb:
+    label: 'Smart Bomb'
+    color: 'purple'
+    iconId: 3993
+  fighter:
+    label: 'Fighter Bomber'
+    color: 'orange'
+    iconId: 1
+  dd:
+    label: 'Doomsday'
+    color: 'black'
+    iconId: 24550
   shield:
     label: 'Shield'
     color: 'white'
@@ -87,49 +106,65 @@ StatsUI = React.createClass(
         name: 'Bellatroix'
         id: 1412571394
       year: 2014
-      source: './explorer.json'
+      source: source_json
     }
   componentDidMount: ->
     $.get @state.source, (data) =>
       stats = new CharacterStats(data)
-      @setState {stats: stats}
+      facts = new CharacterFacts(stats)
+      @setState {stats: stats, year: data.aggregateYear}
   render: ->
-    # character info
-    # time played / general
-    # travel / location
-    # pvp (kills/deaths)
-    # pve
-    # weapons used / damage done
-    # damage taken
-    # mining
-    # industry
-    # market
-    # exploration
-    # social / contacts
+
+    title = React.createElement(Title, {character: @state.character, year: @state.year})
+
     charInfoPanel = React.createElement(CharacterInfoPanel, {character: @state.character})
+
+    travelJumpsPanel = React.createElement(TravelJumpsPanel, {stats: @state.stats})
+    travelDistancePanel = React.createElement(TravelDistancePanel, {stats: @state.stats})
+
     weaponUsagePanel = React.createElement(WeaponUsagePanel, {stats: @state.stats})
     damageTakenPanel = React.createElement(DamageTakenPanel, {stats: @state.stats})
-    travelPanel = React.createElement(TravelPanel, {stats: @state.stats})
+
     selfRepPanel = React.createElement(SelfRepPanel, {stats: @state.stats})
     repsReceivedPanel = React.createElement(RepsReceivedPanel, {stats: @state.stats})
     repsGivenPanel = React.createElement(RepsGivenPanel, {stats: @state.stats})
+
     rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
+
     dom.div {className: 'container'},
+
+      title
+
       charInfoPanel
-      travelPanel
-      weaponUsagePanel
-      damageTakenPanel
-      selfRepPanel
-      repsReceivedPanel
-      repsGivenPanel
+
+      dom.div {className: 'container'},
+        dom.div {className: 'col-md-6'}, travelJumpsPanel
+        dom.div {className: 'col-md-6'}, travelDistancePanel
+
+      dom.div {className: 'container'},
+        dom.div {className: 'col-md-6'}, weaponUsagePanel
+        dom.div {className: 'col-md-6'}, damageTakenPanel
+
+      dom.div {className: 'container'},
+        dom.div {className: 'col-md-6'}, repsGivenPanel
+        dom.div {className: 'col-md-6'}, repsReceivedPanel
+
+      dom.div {className: 'container'},
+        selfRepPanel
+
       rawStatsList
+)
+
+Title = React.createClass(
+  displayName: 'Title'
+  render: ->
+    dom.h2 null, "#{@props.character.name}'s Year in Review, #{@props.year}"
 )
 
 CharacterInfoPanel = React.createClass(
   displayName: 'CharacterInfoPanel'
   render: ->
     dom.div {className: 'container'},
-      dom.h2 null, "Bellatroix's Year in Review, 2014"
       dom.div {className: 'col-md-4'},
         React.createElement(CharacterAvatar,{id: @props.character.id})
       dom.div {className: 'col-md-8'}
@@ -146,6 +181,62 @@ CharacterAvatar = React.createClass(
   render: ->
     url = "https://image.eveonline.com/Character/#{@props.id}_#{@props.width}.jpg"
     dom.img {src: url, width: @props.width, style: {boxShadow: '0 0 30px black'}}
+)
+
+TravelJumpsPanel = React.createClass(
+  displayName: 'TravelJumpsPanel'
+  chartData: ->
+    data = [
+      {
+        key: 'high'
+        value: @props.stats?.travelJumpsStargateHighSec
+      }
+      {
+        key: 'low'
+        value: @props.stats?.travelJumpsStargateLowSec
+      }
+      {
+        key: 'null'
+        value: @props.stats?.travelJumpsStargateNullSec
+      }
+      {
+        key: 'wormhole'
+        value: @props.stats?.travelJumpsWormhole
+      }
+    ]
+    return data
+  render: ->
+    dom.div {className: 'container'},
+      dom.h3 null, 'Stargate / Wormhole Jumps'
+      React.createElement(PieDataPanel,{data: @chartData(), chartType: 'pie'})
+)
+
+TravelDistancePanel = React.createClass(
+  displayName: 'TravelDistancePanel'
+  chartData: ->
+    data = [
+      {
+        key: 'high'
+        value: @props.stats?.travelDistanceWarpedHighSec
+      }
+      {
+        key: 'low'
+        value: @props.stats?.travelDistanceWarpedLowSec
+      }
+      {
+        key: 'null'
+        value: @props.stats?.travelDistanceWarpedNullSec
+      }
+      {
+        key: 'wormhole'
+        value: @props.stats?.travelDistanceWarpedWormhole
+      }
+    ]
+    return data
+  render: ->
+    dom.div {className: 'container'},
+      dom.h3 null, 'Warp Distance Traveled (AU)'
+      React.createElement(PieDataPanel,{data: @chartData(), chartType: 'pie'})
 )
 
 WeaponUsagePanel = React.createClass(
@@ -168,12 +259,28 @@ WeaponUsagePanel = React.createClass(
         key: 'laser'
         value: @props.stats?.combatDamageToPlayersEnergyAmount
       }
+      {
+        key: 'bomb'
+        value: @props.stats?.combatDamageToPlayersBombAmount
+      }
+      {
+        key: 'smartbomb'
+        value: @props.stats?.combatDamageToPlayersSmartBombAmount
+      }
+      {
+        key: 'fighter'
+        value: @props.stats?.combatDamageToPlayersFighterMissileAmount
+      }
+      {
+        key: 'dd'
+        value: @props.stats?.combatDamageToPlayersSuperAmount
+      }
     ]
     return data
   render: ->
     dom.div {className: 'container'},
-      dom.h3 null, 'Weapons'
-        React.createElement(PieDataPanel,{data: @chartData()})
+      dom.h3 null, 'Damage Dealt'
+      React.createElement(PieDataPanel,{data: @chartData()})
 )
 
 DamageTakenPanel = React.createClass(
@@ -195,6 +302,22 @@ DamageTakenPanel = React.createClass(
       {
         key: 'laser'
         value: @props.stats?.combatDamageFromPlayersEnergyAmount
+      }
+      {
+        key: 'bomb'
+        value: @props.stats?.combatDamageFromPlayersBombAmount
+      }
+      {
+        key: 'smartbomb'
+        value: @props.stats?.combatDamageFromPlayersSmartBombAmount
+      }
+      {
+        key: 'fighter'
+        value: @props.stats?.combatDamageFromPlayersFighterMissileAmount
+      }
+      {
+        key: 'dd'
+        value: @props.stats?.combatDamageFromPlayersSuperAmount
       }
     ]
     return data
@@ -224,7 +347,7 @@ SelfRepPanel = React.createClass(
     return data
   render: ->
     dom.div {className: 'container'},
-      dom.h3 null, 'Self Reps'
+      dom.h3 null, 'Local Reps'
         React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp'})
 )
 
@@ -248,7 +371,7 @@ RepsGivenPanel = React.createClass(
     return data
   render: ->
     dom.div {className: 'container'},
-      dom.h3 null, 'Reps Given'
+      dom.h3 null, 'Remote Reps Given'
         React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp'})
 )
 
@@ -276,34 +399,6 @@ RepsReceivedPanel = React.createClass(
         React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp'})
 )
 
-TravelPanel = React.createClass(
-  displayName: 'TravelPanel'
-  chartData: ->
-    data = [
-      {
-        key: 'high'
-        value: @props.stats?.travelJumpsStargateHighSec
-      }
-      {
-        key: 'low'
-        value: @props.stats?.travelJumpsStargateLowSec
-      }
-      {
-        key: 'null'
-        value: @props.stats?.travelJumpsStargateNullSec
-      }
-      {
-        key: 'wormhole'
-        value: @props.stats?.travelJumpsWormhole
-      }
-    ]
-    return data
-  render: ->
-    dom.div {className: 'container'},
-      dom.h3 null, 'Stargate / Wormhole Jumps'
-        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'pie'})
-)
-
 PieDataPanel = React.createClass(
   displayName: 'PieDataPanel'
   getDefaultProps: ->
@@ -312,11 +407,11 @@ PieDataPanel = React.createClass(
     }
   deriveData: (sortFn) ->
     tmp = _.clone @props.data
-    total = 0
+    @total = 0
     {value: max} = _.max tmp, (d) -> d.value
-    _.each tmp, (d) -> total += d.value
-    _.each tmp, (d) ->
-      d.percentOfTotal = d.value / total
+    _.each tmp, (d) => @total += d.value
+    _.each tmp, (d) =>
+      d.percentOfTotal = d.value / @total
       d.percentOfMax = d.value / max
     if sortFn
       tmp.sort sortFn
@@ -334,7 +429,7 @@ PieDataPanel = React.createClass(
       dom.div {className: 'col-md-2'},
         React.createElement(chartElementType, {data: data})
       dom.div {className: 'col-md-3'},
-        React.createElement(PieDataTable,{data: data})
+        React.createElement(PieDataTable,{data: data, total: @total})
 )
 
 PieDataTable = React.createClass(
@@ -345,12 +440,17 @@ PieDataTable = React.createClass(
         iconCell = dom.td null,
           dom.img {src: "https://image.eveonline.com/Type/#{STYLES[d.key].iconId}_32.png"}, null
       else
-        iconCell = null
+        iconCell = dom.td null, null
       return dom.tr {key: d.key},
         iconCell
         dom.td null, STYLES[d.key]?.label
         dom.td null, Intl.NumberFormat().format(d.value)
         dom.td null, d3.round(100*d.percentOfTotal,0)+'%'
+    rows.push dom.tr {key: '_total_'},
+      dom.td null, ''
+      dom.td null, 'Total'
+      dom.td null, Intl.NumberFormat().format(@props.total)
+      dom.td null, ''
     dom.table {className: 'table'},
       dom.tbody null,
         rows
@@ -375,7 +475,6 @@ PieChart = React.createClass(
 
     pie = d3.layout.pie()
             .value (d) -> d.value
-            .padAngle Math.PI / 200
 
     data = pie(@props.data)
 
@@ -388,6 +487,7 @@ PieChart = React.createClass(
               .enter()
               .append 'g'
               .attr 'transform', "translate(#{outerRadius},#{outerRadius})"
+              .attr 'stroke', '#333'
 
     arcs.append 'path'
         .attr 'fill', (d) -> STYLES[d.data.key]?.color
@@ -453,7 +553,7 @@ RawStatsList = React.createClass(
   displayName: 'RawStatsList'
   getInitialState: ->
     return {
-      showZero: false
+      showZero: true
       tag: ''
     }
   onUserInput: (option) ->
