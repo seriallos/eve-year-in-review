@@ -1,15 +1,40 @@
+_ = require 'lodash'
+
 class CharacterStats
   constructor: (stats) ->
     for key, val of stats
       @[key] = val
     @calcDerived()
 
+  secSuffixes: [
+    'HighSec'
+    'LowSec'
+    'NullSec'
+    'Wormhole'
+  ]
+
+  calcTotal: (prefix) ->
+    statNames = _.map @secSuffixes, (suffix) -> prefix + suffix
+    return _.reduce statNames, ((sum, stat) => sum + @[stat]), 0
+
   calcDerived: ->
-    @combatKillsTotal = @combatKillsHighSec + @combatKillsLowSec + @combatKillsNullSec + @combatKillsNullSec
-    @combatDeathsTotal = @combatDeathsHighSec + @combatDeathsLowSec + @combatDeathsNullSec + @combatDeathsNullSec
-    @iskSpentPercent = 100 * (@iskOut / @iskIn)
-    @kdRatio = @combatKillsTotal / @combatDeathsTotal
+    # fix a few stats
+    @iskOut = -(@iskOut)
+    # derive some stats
     @averageSessionLength = @characterMinutes / @characterSessionsStarted
+
+    @combatKillsTotal = @calcTotal 'combatKills'
+    @combatDeathsTotal = @calcTotal 'combatDeaths'
+    @kdRatioTotal = @combatKillsTotal / @combatDeathsTotal
+
+    @kdRatioHigh = @combatKillsHighSec / @combatDeathsHighSec
+    @kdRatioLow = @combatKillsLowSec / @combatDeathsLowSec
+    @kdRatioNull = @combatKillsNullSec / @combatDeathsNullSec
+    @kdRatioWormhole = @combatKillsWormhole / @combatDeathsWormhole
+
+    @travelDistanceWarpedTotal = @calcTotal 'travelDistanceWarped'
+
+    @iskSpentPercent = 100 * (@iskOut / @iskIn)
 
   metadata:
     daysOfActivity:
@@ -722,7 +747,7 @@ class CharacterStats
       name: 'Percent of Income Spent, Overall'
       tags: ['general']
       units: 'percent'
-    kdRatio:
+    kdRatioTotal:
       name: 'Kill/Death Ratio'
       tags: ['pvp']
     averageSessionLength:
