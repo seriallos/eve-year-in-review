@@ -22,8 +22,6 @@ CharacterFacts = require './character_facts'
 
 dom = React.DOM
 
-source_json = './sampledata/null_pvp.json'
-
 samples = [
   'dscan.json'
   'explorer.json'
@@ -117,10 +115,12 @@ StatsUI = React.createClass(
         name: 'Bellatroix'
         id: 1412571394
       year: 2014
-      source: source_json
     }
   componentDidMount: ->
-    $.get @state.source, (data) =>
+    @loadData()
+  loadData: ->
+    source = _.sample samples
+    $.get "./sampledata/#{source}", (data) =>
       stats = new CharacterStats(data)
       @setState {stats: stats, year: data.aggregateYear}
   render: ->
@@ -308,7 +308,7 @@ DistanceAnalogyPanel = React.createClass(
     speedOfLightAu = speedKmPerS / 149597871
     totalAu = @props.distance
     travelSeconds = totalAu / speedOfLightAu
-    lightSpeedYears = Intl.NumberFormat().format(Math.round(travelSeconds / 60 / 60 / 24/ 365))
+    lightSpeedYears = Intl.NumberFormat().format(d3.round(travelSeconds / 60 / 60 / 24/ 365, 1))
     distanceText = "#{@state.vehicle.name} would take #{lightSpeedYears} years to cover your total distance travelled."
     dom.h4 {className: 'pull-right'}, dom.em(null,distanceText)
 )
