@@ -12,6 +12,7 @@
 # * Fix 1 column layout, test on phone/tablet
 # * Partial analogy icons (0.6 of an avatar)
 # * More ships, auto select ship that has a couple hundred kills
+# * Empty charts/tables, don't proper empty message
 
 # Data requests / questions
 # * Incursions?
