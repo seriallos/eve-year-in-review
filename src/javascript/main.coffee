@@ -11,6 +11,14 @@
 # * tick marks on HP Chart
 # * Fix 1 column layout, test on phone/tablet
 # * Partial analogy icons (0.6 of an avatar)
+# * More ships, auto select ship that has a couple hundred kills
+
+# Data requests / questions
+# * Incursions?
+# * Rat kills
+# * DED/explo plexes
+# * Pods contained in the kill data or separate?
+# * Drone damage (also, are fighters drones?)
 
 React = require 'react'
 $ = require 'jquery'
@@ -136,8 +144,20 @@ StatsUI = React.createClass(
 
     distanceAnalogy = React.createElement(DistanceAnalogyPanel, {distance: @state.stats?.total 'travelDistanceWarped'})
 
-    killsPanel = React.createElement(KillsPanel, {stats: @state.stats})
-    deathsPanel = React.createElement(DeathsPanel, {stats: @state.stats})
+    max = _.max [
+      @state.stats?.combatKillsHighSec
+      @state.stats?.combatKillsLowSec
+      @state.stats?.combatKillsNullSec
+      @state.stats?.combatKillsWormhole
+
+      @state.stats?.combatDeathsHighSec
+      @state.stats?.combatDeathsLowSec
+      @state.stats?.combatDeathsNullSec
+      @state.stats?.combatDeathsWormhole
+    ]
+
+    killsPanel = React.createElement(KillsPanel, {stats: @state.stats, max: max})
+    deathsPanel = React.createElement(DeathsPanel, {stats: @state.stats, max: max})
 
     weaponUsagePanel = React.createElement(WeaponUsagePanel, {stats: @state.stats})
     damageTakenPanel = React.createElement(DamageTakenPanel, {stats: @state.stats})
@@ -337,7 +357,7 @@ KillsPanel = React.createClass(
   render: ->
     dom.div null,
       dom.h3 null, 'Kills'
-      React.createElement(BarChart, {data: @chartData()})
+      React.createElement(BarChart, {data: @chartData(), max: @props.max})
 )
 
 DeathsPanel = React.createClass(
@@ -364,7 +384,7 @@ DeathsPanel = React.createClass(
   render: ->
     dom.div null,
       dom.h3 null, 'Deaths'
-      React.createElement(BarChart, {data: @chartData()})
+      React.createElement(BarChart, {data: @chartData(), max: @props.max})
 )
 
 WeaponUsagePanel = React.createClass(
@@ -616,6 +636,7 @@ BarChart = React.createClass(
   displayName: 'BarChart'
   getDefaultProps: ->
     return {
+      max: null
       width: 300
       height: 150
       padding: 30
@@ -628,10 +649,15 @@ BarChart = React.createClass(
   componentDidUpdate: ->
     el = @getDOMNode()
 
-    max = _.max @props.data, (d) -> d.value
+    if not @props.max
+      console.log "calc max"
+      max = _.max @props.data, (d) -> d.value
+      max = max.value
+    else
+      max = @props.max
 
     x = d3.scale.linear()
-          .domain [0, max.value]
+          .domain [0, max]
           .range [0, @props.width]
 
     y = d3.scale.ordinal()
