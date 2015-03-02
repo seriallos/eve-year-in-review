@@ -21,7 +21,7 @@ CharacterFacts = require './character_facts'
 
 dom = React.DOM
 
-source_json = './null_pvp.json'
+source_json = './sampledata/null_pvp.json'
 
 samples = [
   'dscan.json'
