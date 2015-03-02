@@ -4,18 +4,26 @@ class CharacterStats
   constructor: (stats) ->
     for key, val of stats
       @[key] = val
+
+    @secSuffixes = [
+      'HighSec'
+      'LowSec'
+      'NullSec'
+      'Wormhole'
+    ]
+
     @calcDerived()
 
-  secSuffixes: [
-    'HighSec'
-    'LowSec'
-    'NullSec'
-    'Wormhole'
-  ]
-
-  calcTotal: (prefix) ->
+  total: _.memoize (prefix) ->
     statNames = _.map @secSuffixes, (suffix) -> prefix + suffix
     return _.reduce statNames, ((sum, stat) => sum + @[stat]), 0
+
+  percent: _.memoize (prefix, suffix) ->
+    total = @total prefix
+    pct = @[prefix + suffix] / total
+    return pct
+  # resolver
+  , (prefix, suffix) -> return "#{prefix}#{suffix}"
 
   calcDerived: ->
     # fix a few stats
@@ -23,8 +31,8 @@ class CharacterStats
     # derive some stats
     @averageSessionLength = @characterMinutes / @characterSessionsStarted
 
-    @combatKillsTotal = @calcTotal 'combatKills'
-    @combatDeathsTotal = @calcTotal 'combatDeaths'
+    @combatKillsTotal = @total 'combatKills'
+    @combatDeathsTotal = @total 'combatDeaths'
     @kdRatioTotal = @combatKillsTotal / @combatDeathsTotal
 
     @kdRatioHigh = @combatKillsHighSec / @combatDeathsHighSec
@@ -32,7 +40,16 @@ class CharacterStats
     @kdRatioNull = @combatKillsNullSec / @combatDeathsNullSec
     @kdRatioWormhole = @combatKillsWormhole / @combatDeathsWormhole
 
-    @travelDistanceWarpedTotal = @calcTotal 'travelDistanceWarped'
+    @travelDistanceWarpedTotal = @total 'travelDistanceWarped'
+
+    @totalDamageDealt = @combatDamageToPlayersHybridAmount +
+                        @combatDamageToPlayersProjectileAmount +
+                        @combatDamageToPlayersEnergyAmount +
+                        @combatDamageToPlayersMissileAmount +
+                        @combatDamageToPlayersBombAmount +
+                        @combatDamageToPlayersSmartBombAmount +
+                        @combatDamageToPlayersFighterMissileAmount +
+                        @combatDamageToPlayersSuperAmount
 
     @iskSpentPercent = 100 * (@iskOut / @iskIn)
 
