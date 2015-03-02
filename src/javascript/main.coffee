@@ -136,6 +136,9 @@ StatsUI = React.createClass(
 
     distanceAnalogy = React.createElement(DistanceAnalogyPanel, {distance: @state.stats?.total 'travelDistanceWarped'})
 
+    killsPanel = React.createElement(KillsPanel, {stats: @state.stats})
+    deathsPanel = React.createElement(DeathsPanel, {stats: @state.stats})
+
     weaponUsagePanel = React.createElement(WeaponUsagePanel, {stats: @state.stats})
     damageTakenPanel = React.createElement(DamageTakenPanel, {stats: @state.stats})
 
@@ -161,11 +164,16 @@ StatsUI = React.createClass(
         distanceAnalogy
 
       dom.div {className: 'row'},
+        dom.div {className: 'col-md-6'}, killsPanel
+        dom.div {className: 'col-md-6'}, deathsPanel
+
+      dom.div {className: 'row'},
         dom.div {className: 'col-md-6'}, weaponUsagePanel
         dom.div {className: 'col-md-6'}, damageTakenPanel
 
       dom.div {className: 'row'},
         damageAnalogy
+
 
       dom.div {className: 'row'},
         dom.div {className: 'col-md-6'}, repsGivenPanel
@@ -303,6 +311,60 @@ DistanceAnalogyPanel = React.createClass(
     lightSpeedYears = Intl.NumberFormat().format(Math.round(travelSeconds / 60 / 60 / 24/ 365))
     distanceText = "#{@state.vehicle.name} would take #{lightSpeedYears} years to cover your total distance travelled."
     dom.h4 {className: 'pull-right'}, dom.em(null,distanceText)
+)
+
+KillsPanel = React.createClass(
+  displayName: 'KillsPanel'
+  chartData: ->
+    return [
+      {
+        key: 'high'
+        value: @props.stats?.combatKillsHighSec
+      }
+      {
+        key: 'low'
+        value: @props.stats?.combatKillsLowSec
+      }
+      {
+        key: 'null'
+        value: @props.stats?.combatKillsNullSec
+      }
+      {
+        key: 'wormhole'
+        value: @props.stats?.combatKillsWormhole
+      }
+    ]
+  render: ->
+    dom.div null,
+      dom.h3 null, 'Kills'
+      React.createElement(BarChart, {data: @chartData()})
+)
+
+DeathsPanel = React.createClass(
+  displayName: 'DeathsPanel'
+  chartData: ->
+    return [
+      {
+        key: 'high'
+        value: @props.stats?.combatDeathsHighSec
+      }
+      {
+        key: 'low'
+        value: @props.stats?.combatDeathsLowSec
+      }
+      {
+        key: 'null'
+        value: @props.stats?.combatDeathsNullSec
+      }
+      {
+        key: 'wormhole'
+        value: @props.stats?.combatDeathsWormhole
+      }
+    ]
+  render: ->
+    dom.div null,
+      dom.h3 null, 'Deaths'
+      React.createElement(BarChart, {data: @chartData()})
 )
 
 WeaponUsagePanel = React.createClass(
@@ -548,6 +610,71 @@ PieDataTable = React.createClass(
     dom.table {className: 'table table-condensed'},
       dom.tbody null,
         rows
+)
+
+BarChart = React.createClass(
+  displayName: 'BarChart'
+  getDefaultProps: ->
+    return {
+      width: 300
+      height: 150
+      padding: 30
+      margin:
+        top: 20
+        right: 40
+        bottom: 20
+        left: 100
+    }
+  componentDidUpdate: ->
+    el = @getDOMNode()
+
+    max = _.max @props.data, (d) -> d.value
+
+    x = d3.scale.linear()
+          .domain [0, max.value]
+          .range [0, @props.width]
+
+    y = d3.scale.ordinal()
+          .domain(_.map(@props.data, (d) -> d.key))
+          .rangeRoundBands [0, @props.height], .1
+
+    yAxis = d3.svg.axis()
+              .scale y
+              .orient 'left'
+              .tickFormat (d) ->
+                STYLES[d].label
+
+    svg = d3.select(el).append('svg')
+              .attr 'width', @props.width + @props.margin.left + @props.margin.right
+              .attr 'height', @props.height + @props.margin.top + @props.margin.top
+            .append 'g'
+              .attr 'transform', "translate(#{@props.margin.left},#{@props.margin.top})"
+
+    svg.append 'g'
+        .attr 'class', 'y axis'
+        .call yAxis
+
+    bar = svg.selectAll '.bar'
+                  .data @props.data
+                .enter().append('g')
+                  .attr 'class', 'bar'
+                  .attr 'transform', (d, i) => "translate(0,#{y(d.key)})"
+
+    bar.append 'rect'
+        .attr 'width', (d) -> x(d.value)
+        .attr 'height', y.rangeBand()
+        .attr 'fill', (d) -> STYLES[d.key].color
+
+    bar.append 'text'
+        .attr 'x', (d) -> x(d.value) + 3
+        .attr 'y', y.rangeBand() / 2
+        .attr 'dy', '.35em'
+        .attr 'fill', 'white'
+        .text (d) -> Intl.NumberFormat().format(d.value)
+
+
+  render: ->
+    dom.div null, ''
 )
 
 PieChart = React.createClass(

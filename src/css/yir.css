@@ -1,0 +1,8 @@
+.axis text {
+  fill: white;
+}
+.domain {
+  fill: none;
+  stroke: white;
+  stroke-width: 1;
+}
