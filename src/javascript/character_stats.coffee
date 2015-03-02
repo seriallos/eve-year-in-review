@@ -14,6 +14,10 @@ class CharacterStats
 
     @calcDerived()
 
+  # not tested, may not be useful since names are all over the place
+  #getByPrefix: (prefix) ->
+  #  return _.map @, (key, val) -> {key: key, val: val}
+
   total: _.memoize (prefix) ->
     statNames = _.map @secSuffixes, (suffix) -> prefix + suffix
     return _.reduce statNames, ((sum, stat) => sum + @[stat]), 0
