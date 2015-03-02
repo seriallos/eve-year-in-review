@@ -10,6 +10,7 @@
 # * More/better raw stat formatters (minutes to H:M, etc)
 # * tick marks on HP Chart
 # * Fix 1 column layout, test on phone/tablet
+# * Partial analogy icons (0.6 of an avatar)
 
 React = require 'react'
 $ = require 'jquery'
@@ -366,7 +367,7 @@ DamageAnalogyPanel = React.createClass(
     numShips = d3.round(@props.damage / ship.ehp, 1)
     stamps = []
     for i in [0...Math.floor(numShips)]
-      stamps.push dom.img {src: eveIconUrl(ship.id), className: 'pull-right'}
+      stamps.push dom.img {key: i, src: eveIconUrl(ship.id), className: 'pull-right'}
 
     dom.div null,
       dom.h4 {className: 'pull-right'},
