@@ -1,5 +1,4 @@
 
-
 # Ideas
 # * Damage represented by ship icon (relative EHP)
 #   * Silhoette icon, standard EHP on a PVP fit
@@ -10,17 +9,19 @@
 # * H/L/N/W colors
 # * More/better raw stat formatters (minutes to H:M, etc)
 # * tick marks on HP Chart
+# * Fix 1 column layout, test on phone/tablet
 
 React = require 'react'
 $ = require 'jquery'
-CharacterStats = require './character_stats'
-CharacterFacts = require './character_facts'
 d3 = require 'd3'
 _ = require 'lodash'
 
+CharacterStats = require './character_stats'
+CharacterFacts = require './character_facts'
+
 dom = React.DOM
 
-source_json = './lowsec.json'
+source_json = './null_pvp.json'
 
 samples = [
   'dscan.json'
@@ -95,7 +96,16 @@ STYLES =
     label: 'Wormholes'
     color: '#0000df'
 
+# alias styles
+STYLES.HighSec = STYLES.high
+STYLES.LowSec = STYLES.low
+STYLES.NullSec = STYLES.null
+STYLES.Wormhole = STYLES.wormhole
+
 HP_BAR_ORDER = ['shield','armor','hull']
+
+eveIconUrl = (id, width = 32) ->
+  return "https://image.eveonline.com/Type/#{id}_#{width}.png"
 
 StatsUI = React.createClass(
   displayName: 'CharacterStatsUI'
@@ -111,19 +121,24 @@ StatsUI = React.createClass(
   componentDidMount: ->
     $.get @state.source, (data) =>
       stats = new CharacterStats(data)
-      facts = new CharacterFacts(stats)
       @setState {stats: stats, year: data.aggregateYear}
   render: ->
+    if @state.stats
+      facts = new CharacterFacts(@state.stats).getFacts()
 
     title = React.createElement(Title, {character: @state.character, year: @state.year})
 
-    charInfoPanel = React.createElement(CharacterInfoPanel, {character: @state.character})
+    charInfoPanel = React.createElement(CharacterInfoPanel, {character: @state.character, facts: facts})
 
     travelJumpsPanel = React.createElement(TravelJumpsPanel, {stats: @state.stats})
     travelDistancePanel = React.createElement(TravelDistancePanel, {stats: @state.stats})
 
+    distanceAnalogy = React.createElement(DistanceAnalogyPanel, {distance: @state.stats?.total 'travelDistanceWarped'})
+
     weaponUsagePanel = React.createElement(WeaponUsagePanel, {stats: @state.stats})
     damageTakenPanel = React.createElement(DamageTakenPanel, {stats: @state.stats})
+
+    damageAnalogy = React.createElement(DamageAnalogyPanel, {damage: @state.stats?.totalDamageDealt})
 
     selfRepPanel = React.createElement(SelfRepPanel, {stats: @state.stats})
     repsReceivedPanel = React.createElement(RepsReceivedPanel, {stats: @state.stats})
@@ -137,15 +152,21 @@ StatsUI = React.createClass(
 
       charInfoPanel
 
-      dom.div {className: 'container'},
+      dom.div {className: 'row'},
         dom.div {className: 'col-md-6'}, travelJumpsPanel
         dom.div {className: 'col-md-6'}, travelDistancePanel
 
-      dom.div {className: 'container'},
+      dom.div {className: 'row'},
+        distanceAnalogy
+
+      dom.div {className: 'row'},
         dom.div {className: 'col-md-6'}, weaponUsagePanel
         dom.div {className: 'col-md-6'}, damageTakenPanel
 
-      dom.div {className: 'container'},
+      dom.div {className: 'row'},
+        damageAnalogy
+
+      dom.div {className: 'row'},
         dom.div {className: 'col-md-6'}, repsGivenPanel
         dom.div {className: 'col-md-6'}, repsReceivedPanel
 
@@ -166,9 +187,10 @@ CharacterInfoPanel = React.createClass(
   render: ->
     dom.div {className: 'container'},
       dom.div {className: 'col-md-4'},
-        React.createElement(CharacterAvatar,{id: @props.character.id})
-      dom.div {className: 'col-md-8'}
-        dom.span 'bar'
+        React.createElement(CharacterAvatar, {id: @props.character.id})
+      dom.div {className: 'col-md-8'},
+        dom.ul null,
+          dom.li null, 'Prefers ' + STYLES[@props.facts?.preferredSec]?.label
 )
 
 CharacterAvatar = React.createClass(
@@ -239,6 +261,49 @@ TravelDistancePanel = React.createClass(
       React.createElement(PieDataPanel,{data: @chartData(), chartType: 'pie'})
 )
 
+DistanceAnalogyPanel = React.createClass(
+  displayName: 'DistanceAnalogyPanel'
+  # in meters per second
+  vehicles:
+    light:
+      name: 'The speed of light'
+      speed: 299792458
+    voyagerOne:
+      name: 'Voyager 1'
+      speed: 17260.2
+    mph60:
+      name: 'A car travelling at 60 MPH'
+      speed: 26.8224
+    concord:
+      name: 'The Concorde'
+      speed: 605.292
+    walker:
+      name: 'Walking on foot'
+      speed: 1.4
+    cyclist:
+      name: 'Riding a bicycle'
+      speed: 6.5
+    ferrari:
+      name: 'A Ferrari F50 GT1'
+      speed: 105.5
+    iss:
+      name: 'The International Space Station orbiting the Earth'
+      speed: 7700
+
+  getInitialState: ->
+    return {
+      vehicle: _.sample @vehicles
+    }
+  render: ->
+    speedKmPerS = @state.vehicle.speed / 1000
+    speedOfLightAu = speedKmPerS / 149597871
+    totalAu = @props.distance
+    travelSeconds = totalAu / speedOfLightAu
+    lightSpeedYears = Intl.NumberFormat().format(Math.round(travelSeconds / 60 / 60 / 24/ 365))
+    distanceText = "#{@state.vehicle.name} would take #{lightSpeedYears} years to cover your total distance travelled."
+    dom.h4 {className: 'pull-right'}, dom.em(null,distanceText)
+)
+
 WeaponUsagePanel = React.createClass(
   displayName: 'WeaponUsagePanel'
   chartData: ->
@@ -281,6 +346,34 @@ WeaponUsagePanel = React.createClass(
     dom.div {className: 'container'},
       dom.h3 null, 'Damage Dealt'
       React.createElement(PieDataPanel,{data: @chartData()})
+)
+
+DamageAnalogyPanel = React.createClass(
+  displayName: 'DamageAnalogyPanel'
+  ships:
+    proteus:
+      pluralName: 'Proteii'
+      id: 29988
+      ehp: 150000
+      fit: 'https://o.smium.org/loadout/private/23324/6303219387142766592'
+    avatar:
+      pluralName: 'Avatars'
+      id: 11567
+      ehp: 22600000
+      fit: 'https://o.smium.org/loadout/private/23322/7459269642280763392'
+  render: ->
+    ship = _.sample @ships
+    numShips = d3.round(@props.damage / ship.ehp, 1)
+    stamps = []
+    for i in [0...Math.floor(numShips)]
+      stamps.push dom.img {src: eveIconUrl(ship.id), className: 'pull-right'}
+
+    dom.div null,
+      dom.h4 {className: 'pull-right'},
+        dom.em null,"You have dealt enough damage to kill #{numShips} "
+          dom.a {href: ship.fit}, ship.pluralName
+      dom.div {className: 'container'}, stamps
+
 )
 
 DamageTakenPanel = React.createClass(
@@ -438,7 +531,7 @@ PieDataTable = React.createClass(
     rows = _.map @props.data, (d) =>
       if STYLES[d.key]?.iconId
         iconCell = dom.td null,
-          dom.img {src: "https://image.eveonline.com/Type/#{STYLES[d.key].iconId}_32.png"}, null
+          dom.img {src: eveIconUrl(STYLES[d.key].iconId)}, null
       else
         iconCell = dom.td null, null
       return dom.tr {key: d.key},
@@ -451,7 +544,7 @@ PieDataTable = React.createClass(
       dom.td null, 'Total'
       dom.td null, Intl.NumberFormat().format(@props.total)
       dom.td null, ''
-    dom.table {className: 'table'},
+    dom.table {className: 'table table-condensed'},
       dom.tbody null,
         rows
 )
