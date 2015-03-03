@@ -5,7 +5,7 @@ Overall Page Structure
 * Character
     * Avatar
     * Name
-    * Key Stats
+    * Key Stats ???
         * Determine most interesting stats based on profile of activity
             * PVPer
                 * Kills, Deaths, Damage
@@ -35,10 +35,6 @@ Overall Page Structure
         * Scram, Web, Cap, etc
     * Modules from Players
     * Misc
-        * DD
-        * Fighter Bombers
-        * Bombs
-        * Smart bombs
         * Criminal Flags
         * Duels
 * PVE

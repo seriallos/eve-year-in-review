@@ -6,20 +6,27 @@
 # AU breakdown (distance to different galaxies, amount of years at speed of light)
 
 # TODO
-# * H/L/N/W colors
+# * Less intense H/L/N/W colors
 # * More/better raw stat formatters (minutes to H:M, etc)
-# * tick marks on HP Chart
+# * tick marks on HP Chart (shield armor hull half circle)
 # * Fix 1 column layout, test on phone/tablet
 # * Partial analogy icons (0.6 of an avatar)
 # * More ships, auto select ship that has a couple hundred kills
 # * Empty charts/tables, don't proper empty message
+# * Format numbers to 1M, 1B, 1T instead of lots of digits?
 
 # Data requests / questions
-# * Incursions?
-# * Rat kills
-# * DED/explo plexes
+# * Drone damage (also, are fighters drones?) (PC vs NPC)
+# * PVE
+#   * Incursions?
+#   * Rat kills
+#   * DED/explo plexes
+#   * ECM/Damp/TP/Vamp - PC vs NPC?
 # * Pods contained in the kill data or separate?
-# * Drone damage (also, are fighters drones?)
+# * Self cap boosting (to supplement cap transfers)
+# * Wormhole docking (Thera)
+# * PI Stats?
+# * Industry stats - number of runs, not quantity of output (charges throw off the stats)
 
 React = require 'react'
 $ = require 'jquery'
@@ -32,15 +39,14 @@ CharacterFacts = require './character_facts'
 dom = React.DOM
 
 samples = [
-  'dscan.json'
-  'explorer.json'
-  'industry.json'
-  'lowsec.json'
-  'null_pvp.json'
-  'market.json'
-  'miner.json'
-  'missions.json'
-  'random.json'
+  'dscan'
+  'explorer'
+  'industry'
+  'lowsec'
+  'null_pvp'
+  'market'
+  'miner'
+  'missions'
 ]
 
 
@@ -83,6 +89,15 @@ STYLES =
     label: 'Shield'
     color: 'white'
     iconId: 10838
+  web:
+    label: 'Stasis Webifier'
+    iconId: 526
+  scram:
+    label: 'Warp Scrambler'
+    iconId: 3242
+  neut:
+    label: 'Energy Neutralizer'
+    iconId: 12269
   armor:
     label: 'Armor'
     color: 'white'
@@ -103,6 +118,79 @@ STYLES =
   wormhole:
     label: 'Wormholes'
     color: '#0000df'
+  charge:
+    label: 'Charges'
+  commodity:
+    label: 'Commodity'
+  deployable:
+    label: 'Deployable'
+  drone:
+    label: 'Drone'
+  implant:
+    label: 'Implant'
+  module:
+    label: 'Module'
+  ship:
+    label: 'Ship'
+  structure:
+    label: 'Structure'
+  subsystem:
+    label: 'Subsystem'
+
+  arkonor:
+    label: 'Arkonor'
+    iconId: 22
+  bistot:
+    label: 'Bistot'
+    iconId: 1223
+  crokite:
+    label: 'Crokite'
+    iconId: 1225
+  darkochre:
+    label: 'Dark Ochre'
+    iconId: 1232
+  gneiss:
+    label: 'Gneiss'
+    iconId: 1229
+  gas:
+    label: 'Harvestable Cloud'
+    iconId: 30372
+  hedbergite:
+    label: 'Hedbergite'
+    iconId: 21
+  hemoprphite:
+    label: 'Hemorphite'
+    iconId: 1231
+  ice:
+    label: 'Ice'
+    iconId: 16264
+  jaspet:
+    label: 'Jaspet'
+    iconId: 1226
+  kernite:
+    label: 'Kernite'
+    iconId: 20
+  mercoxit:
+    label: 'Mercoxit'
+    iconId: 11396
+  omber:
+    label: 'Omber'
+    iconId: 1227
+  plagioclase:
+    label: 'Plagioclase'
+    iconId: 18
+  pyroxeres:
+    label: 'Pyroxeres'
+    iconId: 1224
+  scordite:
+    label: 'Scordite'
+    iconId: 1228
+  spodumain:
+    label: 'Spodumain'
+    iconId: 19
+  veldspar:
+    label: 'Veldspar'
+    iconId: 1230
 
 # alias styles
 STYLES.HighSec = STYLES.high
@@ -111,6 +199,9 @@ STYLES.NullSec = STYLES.null
 STYLES.Wormhole = STYLES.wormhole
 
 HP_BAR_ORDER = ['shield','armor','hull']
+
+styleIconUrl = (key, width = 32) ->
+  return eveIconUrl(STYLES[key].iconId, width)
 
 eveIconUrl = (id, width = 32) ->
   return "https://image.eveonline.com/Type/#{id}_#{width}.png"
@@ -128,13 +219,19 @@ StatsUI = React.createClass(
   componentDidMount: ->
     @loadData()
   loadData: ->
-    source = _.sample samples
-    $.get "./sampledata/#{source}", (data) =>
+    if window.location.hash
+      source = "#{window.location.hash.substring(1)}"
+    else
+      source = "null_pvp"
+      source = _.sample samples
+    $.get "./sampledata/#{source}.json", (data) =>
       stats = new CharacterStats(data)
       @setState {stats: stats, year: data.aggregateYear}
   render: ->
-    if @state.stats
-      facts = new CharacterFacts(@state.stats).getFacts()
+    if not @state.stats
+      return dom.div null, "Loading..."
+
+    facts = new CharacterFacts(@state.stats).getFacts()
 
     title = React.createElement(Title, {character: @state.character, year: @state.year})
 
@@ -165,9 +262,21 @@ StatsUI = React.createClass(
 
     damageAnalogy = React.createElement(DamageAnalogyPanel, {damage: @state.stats?.totalDamageDealt})
 
+    pvpModulesUsage = React.createElement(PvpModulesUsage, {stats: @state.stats})
+    pvpModulesAgainst = React.createElement(PvpModulesAgainst, {stats: @state.stats})
+
+    miscPvpStats = React.createElement(MiscPvpStats, {stats: @state.stats})
+
     selfRepPanel = React.createElement(SelfRepPanel, {stats: @state.stats})
     repsReceivedPanel = React.createElement(RepsReceivedPanel, {stats: @state.stats})
     repsGivenPanel = React.createElement(RepsGivenPanel, {stats: @state.stats})
+
+    pveStats = React.createElement(PvePanel, {stats: @state.stats})
+
+    industryJobs = React.createElement(IndustryJobsPanel, {stats: @state.stats})
+    blueprints = React.createElement(IndustryBlueprintPanel, {stats: @state.stats})
+
+    miningPanel = React.createElement(MiningPanel, {stats: @state.stats})
 
     rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
 
@@ -177,12 +286,16 @@ StatsUI = React.createClass(
 
       charInfoPanel
 
+      # Residence / Distance
+
       dom.div {className: 'row'},
         dom.div {className: 'col-md-6'}, travelJumpsPanel
         dom.div {className: 'col-md-6'}, travelDistancePanel
 
       dom.div {className: 'row'},
-        distanceAnalogy
+        dom.div {className: 'col-md-12'}, distanceAnalogy
+
+      # PVP
 
       dom.div {className: 'row'},
         dom.div {className: 'col-md-6'}, killsPanel
@@ -193,15 +306,41 @@ StatsUI = React.createClass(
         dom.div {className: 'col-md-6'}, damageTakenPanel
 
       dom.div {className: 'row'},
-        damageAnalogy
+        dom.div {className: 'col-md-12'}, damageAnalogy
 
+      dom.div {className: 'row'},
+        dom.div {className: 'col-md-6'}, pvpModulesUsage
+        dom.div {className: 'col-md-6'}, pvpModulesAgainst
+
+      dom.div {className: 'row'},
+        dom.div {className: 'col-md-6'}, miscPvpStats
 
       dom.div {className: 'row'},
         dom.div {className: 'col-md-6'}, repsGivenPanel
         dom.div {className: 'col-md-6'}, repsReceivedPanel
 
-      dom.div {className: 'container'},
-        selfRepPanel
+      dom.div {className: 'row'},
+        dom.div {className: 'col-md-12'}, selfRepPanel
+
+      # PVE Stats
+
+      dom.div {className: 'row'},
+        dom.div {className: 'col-md-12'}, pveStats
+
+      # Industry
+      dom.div {className: 'row'},
+        dom.div {className: 'col-md-6'}, industryJobs
+        dom.div {className: 'col-md-6'}, blueprints
+
+      # Mining
+      dom.div {className: 'row'},
+        dom.div {className: 'col-md-6'}, miningPanel
+
+      # Markets
+
+      # Social
+
+      # Misc
 
       rawStatsList
 )
@@ -232,7 +371,7 @@ CharacterAvatar = React.createClass(
     }
   render: ->
     url = "https://image.eveonline.com/Character/#{@props.id}_#{@props.width}.jpg"
-    dom.img {src: url, width: @props.width, style: {boxShadow: '0 0 30px black'}}
+    dom.img {src: url, width: @props.width, height: @props.width, style: {boxShadow: '0 0 30px black'}}
 )
 
 TravelJumpsPanel = React.createClass(
@@ -357,7 +496,10 @@ KillsPanel = React.createClass(
     ]
   render: ->
     dom.div null,
-      dom.h3 null, 'Kills'
+      dom.h3 null,
+        'Kills'
+        ' '
+        dom.small null, 'PVP'
       React.createElement(BarChart, {data: @chartData(), max: @props.max})
 )
 
@@ -384,7 +526,10 @@ DeathsPanel = React.createClass(
     ]
   render: ->
     dom.div null,
-      dom.h3 null, 'Deaths'
+      dom.h3 null,
+        'Deaths'
+        ' '
+        dom.small null, 'PVP'
       React.createElement(BarChart, {data: @chartData(), max: @props.max})
 )
 
@@ -428,36 +573,11 @@ WeaponUsagePanel = React.createClass(
     return data
   render: ->
     dom.div {className: 'container'},
-      dom.h3 null, 'Damage Dealt'
+      dom.h3 null,
+        'Damage Dealt'
+        ' '
+        dom.small null, "Total"
       React.createElement(PieDataPanel,{data: @chartData()})
-)
-
-DamageAnalogyPanel = React.createClass(
-  displayName: 'DamageAnalogyPanel'
-  ships:
-    proteus:
-      pluralName: 'Proteii'
-      id: 29988
-      ehp: 150000
-      fit: 'https://o.smium.org/loadout/private/23324/6303219387142766592'
-    avatar:
-      pluralName: 'Avatars'
-      id: 11567
-      ehp: 22600000
-      fit: 'https://o.smium.org/loadout/private/23322/7459269642280763392'
-  render: ->
-    ship = _.sample @ships
-    numShips = d3.round(@props.damage / ship.ehp, 1)
-    stamps = []
-    for i in [0...Math.floor(numShips)]
-      stamps.push dom.img {key: i, src: eveIconUrl(ship.id), className: 'pull-right'}
-
-    dom.div null,
-      dom.h4 {className: 'pull-right'},
-        dom.em null,"You have dealt enough damage to kill #{numShips} "
-          dom.a {href: ship.fit}, ship.pluralName
-      dom.div {className: 'container'}, stamps
-
 )
 
 DamageTakenPanel = React.createClass(
@@ -500,8 +620,97 @@ DamageTakenPanel = React.createClass(
     return data
   render: ->
     dom.div {className: 'container'},
-      dom.h3 null, 'Damage Taken'
-        React.createElement(PieDataPanel,{data: @chartData()})
+      dom.h3 null,
+        'Damage Taken'
+        ' '
+        dom.small null, 'PVP'
+      React.createElement(PieDataPanel,{data: @chartData()})
+)
+
+DamageAnalogyPanel = React.createClass(
+  displayName: 'DamageAnalogyPanel'
+  ships:
+    proteus:
+      pluralName: 'Proteii'
+      id: 29988
+      ehp: 150000
+      fit: 'https://o.smium.org/loadout/private/23324/6303219387142766592'
+    # avatar:
+    #   pluralName: 'Avatars'
+    #   id: 11567
+    #   ehp: 22600000
+    #   fit: 'https://o.smium.org/loadout/private/23322/7459269642280763392'
+  render: ->
+    ship = _.sample @ships
+    numShips = d3.round(@props.damage / ship.ehp, 1)
+    stamps = []
+    for i in [0...Math.floor(numShips)]
+      stamps.push dom.img {key: i, src: eveIconUrl(ship.id), width: 32, height: 32, className: 'pull-right'}
+
+    dom.div null,
+      dom.h4 {className: 'pull-right'},
+        dom.em null,"You have dealt enough damage to kill #{numShips} "
+          dom.a {href: ship.fit}, ship.pluralName
+      dom.div {className: 'container'}, stamps
+
+)
+
+PvpModulesUsage = React.createClass(
+  displayName: 'PvpModulesUsage'
+  render: ->
+    if @props.stats
+      dom.div null,
+        dom.ul null,
+          dom.li null,
+            dom.img {src: styleIconUrl('web', 64), width: 64, height: 64}, null
+            "Webbed #{@props.stats.combatWebifyingPC} players"
+          dom.li null,
+            dom.img {src: styleIconUrl('scram', 64), width: 64, height: 64}, null
+            "Warp scrambled #{@props.stats.combatWarpScramblePC} players"
+          dom.li null,
+            dom.img {src: styleIconUrl('neut', 64), width: 64, height: 64}, null
+            "#{@props.stats.combatCapDrainingPC} GJ drained from players"
+    else
+      null
+)
+
+PvpModulesAgainst = React.createClass(
+  displayName: 'PvpModulesAgainst'
+  render: ->
+    dom.div null,
+      dom.ul null,
+        dom.li null,
+          dom.img {src: styleIconUrl 'web', 64}, null
+          "Webbed #{@props.stats.combatWebifiedbyPC} times by other players"
+        dom.li null,
+          dom.img {src: styleIconUrl 'scram', 64}, null
+          "Warp scrambled #{@props.stats.combatWarpScrambledbyPC} times by other players"
+        dom.li null,
+          dom.img {src: styleIconUrl 'neut', 64}, null
+          "Other players have drained #{@props.stats.combatCapDrainedbyPC} GJ from you"
+)
+
+MiscPvpStats = React.createClass(
+  displayName: 'MiscPvpStats'
+  render: ->
+    dom.div null,
+      dom.ul null,
+        dom.li null,
+          dom.img {src: 'images/pvpFlag.png'}
+          ' '
+          "PVP flagged #{@props.stats.combatPvpFlagSet} times"
+        dom.li null,
+          dom.img {src: 'images/criminalFlag.png'}
+          ' '
+          "Criminally flagged #{@props.stats.combatCriminalFlagSet} times"
+        dom.li null,
+          dom.img {src: 'images/duel.png'}
+          ' '
+          "Requested #{@props.stats.combatDuelRequested} duels"
+        dom.li null,
+          dom.img {src: 'images/overheat.png'}
+          ' '
+          "Overloaded #{@props.stats.moduleOverload} modules"
 )
 
 SelfRepPanel = React.createClass(
@@ -576,6 +785,167 @@ RepsReceivedPanel = React.createClass(
         React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp'})
 )
 
+PvePanel = React.createClass(
+  displayName: 'PvePanel'
+  render: ->
+    dom.div null,
+      dom.h3 null, 'PVE'
+      dom.ul null,
+        dom.li null, "Completed #{@props.stats.pveMissionsSucceeded} missions"
+        dom.li null, "Completed #{@props.stats.pveMissionsSucceededEpicArc} epic arcs"
+        dom.li null, "Hacked #{@props.stats.industryArcheologySuccesses} relic cans"
+        dom.li null, "Hacked #{@props.stats.industryHackingSuccesses} data cans"
+        dom.li null, "NPC Combat flagged #{@props.stats.combatNpcFlagSet} times"
+        dom.li null, "Taken #{@props.stats.combatDamageFromNPCsAmount} damage from NPCs"
+        dom.li null, "Scrammed #{@props.stats.combatWarpScrambledbyNPC} times by NPCs"
+        dom.li null, "Webbed #{@props.stats.combatWebifiedbyNPC} times by NPCs"
+)
+
+IndustryJobsPanel = React.createClass(
+  displayName: 'IndustryJobsPanel'
+  chartData: ->
+    data = [
+      {
+        key: 'charge'
+        value: @props.stats?.industryRamJobsCompletedManufactureChargeQuantity
+      }
+      {
+        key: 'commodity'
+        value: @props.stats?.industryRamJobsCompletedManufactureCommodityQuantity
+      }
+      {
+        key: 'deployable'
+        value: @props.stats?.industryRamJobsCompletedManufactureDeployableQuantity
+      }
+      {
+        key: 'drone'
+        value: @props.stats?.industryRamJobsCompletedManufactureDroneQuantity
+      }
+      {
+        key: 'implant'
+        value: @props.stats?.industryRamJobsCompletedManufactureImplantQuantity
+      }
+      {
+        key: 'module'
+        value: @props.stats?.industryRamJobsCompletedManufactureModuleQuantity
+      }
+      {
+        key: 'ship'
+        value: @props.stats?.industryRamJobsCompletedManufactureShipQuantity
+      }
+      {
+        key: 'structure'
+        value: @props.stats?.industryRamJobsCompletedManufactureStructureQuantity
+      }
+      {
+        key: 'subsystem'
+        value: @props.stats?.industryRamJobsCompletedManufactureSubsystemQuantity
+      }
+    ]
+    return data
+  render: ->
+    dom.div {className: 'container'},
+      dom.h3 null, 'Manufacturing Jobs'
+        React.createElement(PieDataPanel,{data: @chartData()})
+)
+
+IndustryBlueprintPanel = React.createClass(
+  displayName: 'IndustryBlueprintPanel'
+  render: ->
+    dom.div null,
+      dom.h3 null, "Blueprints"
+      dom.ul null,
+        dom.li null, "Copied #{@props.stats.industryRamJobsCompletedCopyBlueprint} blueprints"
+        dom.li null, "#{@props.stats.industryRamJobsCompletedMaterialProductivity} ME jobs"
+        dom.li null, "#{@props.stats.industryRamJobsCompletedTimeProductivity} TE jobs"
+        dom.li null, "#{@props.stats.industryRamJobsCompletedInvention} invention jobs"
+        dom.li null, "#{@props.stats.industryRamJobsCompletedReverseEngineering} reverse engineering jobs"
+)
+
+MiningPanel = React.createClass(
+  displayName: 'MiningPanel'
+  chartData: ->
+    data = [
+      {
+        key: 'arkonor'
+        value: @props.stats?.miningOreArkonor
+      }
+      {
+        key: 'bistot'
+        value: @props.stats?.miningOreBistot
+      }
+      {
+        key: 'crokite'
+        value: @props.stats?.miningOreCrokite
+      }
+      {
+        key: 'darkochre'
+        value: @props.stats?.miningOreDarkOchre
+      }
+      {
+        key: 'gneiss'
+        value: @props.stats?.miningOreGneiss
+      }
+      {
+        key: 'gas'
+        value: @props.stats?.miningOreHarvestableCloud
+      }
+      {
+        key: 'hedbergite'
+        value: @props.stats?.miningOreHedbergite
+      }
+      {
+        key: 'hemoprphite'
+        value: @props.stats?.miningOreHemorphite
+      }
+      {
+        key: 'ice'
+        value: @props.stats?.miningOreIce
+      }
+      {
+        key: 'jaspet'
+        value: @props.stats?.miningOreJaspet
+      }
+      {
+        key: 'kernite'
+        value: @props.stats?.miningOreKernite
+      }
+      {
+        key: 'mercoxit'
+        value: @props.stats?.miningOreMercoxit
+      }
+      {
+        key: 'omber'
+        value: @props.stats?.miningOreOmber
+      }
+      {
+        key: 'plagioclase'
+        value: @props.stats?.miningOrePlagioclase
+      }
+      {
+        key: 'pyroxeres'
+        value: @props.stats?.miningOrePyroxeres
+      }
+      {
+        key: 'scordite'
+        value: @props.stats?.miningOreScordite
+      }
+      {
+        key: 'spodumain'
+        value: @props.stats?.miningOreSpodumain
+      }
+      {
+        key: 'veldspar'
+        value: @props.stats?.miningOreVeldspar
+      }
+    ]
+    return data
+  render: ->
+    dom.div {className: 'container'},
+      dom.h3 null, 'Mining'
+        React.createElement(PieDataPanel,{data: @chartData()})
+)
+
 PieDataPanel = React.createClass(
   displayName: 'PieDataPanel'
   getDefaultProps: ->
@@ -588,8 +958,8 @@ PieDataPanel = React.createClass(
     {value: max} = _.max tmp, (d) -> d.value
     _.each tmp, (d) => @total += d.value
     _.each tmp, (d) =>
-      d.percentOfTotal = d.value / @total
-      d.percentOfMax = d.value / max
+      d.percentOfTotal = if @total then d.value / @total else 0
+      d.percentOfMax = if max then d.value / max else 0
     if sortFn
       tmp.sort sortFn
     return tmp
@@ -615,7 +985,7 @@ PieDataTable = React.createClass(
     rows = _.map @props.data, (d) =>
       if STYLES[d.key]?.iconId
         iconCell = dom.td null,
-          dom.img {src: eveIconUrl(STYLES[d.key].iconId)}, null
+          dom.img {src: eveIconUrl(STYLES[d.key].iconId), width: 32, height: 32}, null
       else
         iconCell = dom.td null, null
       return dom.tr {key: d.key},
@@ -647,11 +1017,16 @@ BarChart = React.createClass(
         bottom: 20
         left: 100
     }
+  componentDidMount: ->
+    @renderChart()
   componentDidUpdate: ->
+    @renderChart()
+  renderChart: ->
+    if @props.data.length == 0
+      return
     el = @getDOMNode()
 
     if not @props.max
-      console.log "calc max"
       max = _.max @props.data, (d) -> d.value
       max = max.value
     else
@@ -690,7 +1065,9 @@ BarChart = React.createClass(
     bar.append 'rect'
         .attr 'width', (d) -> x(d.value)
         .attr 'height', y.rangeBand()
-        .attr 'fill', (d) -> STYLES[d.key].color
+        .attr 'fill', (d, i) ->
+          if STYLES[d.key].color
+            return STYLES[d.key].color
 
     bar.append 'text'
         .attr 'x', (d) -> x(d.value) + 3
@@ -712,8 +1089,17 @@ PieChart = React.createClass(
       height: 150
       innerRadius: 55
     }
+  componentDidMount: ->
+    @renderChart()
   componentDidUpdate: ->
+    @renderChart()
+  renderChart: ->
+    if @props.data.length == 0
+      return
+
     el = @getDOMNode()
+
+    color = d3.scale.category20()
 
     outerRadius = @props.width / 2
 
@@ -738,7 +1124,11 @@ PieChart = React.createClass(
               .attr 'stroke', '#333'
 
     arcs.append 'path'
-        .attr 'fill', (d) -> STYLES[d.data.key]?.color
+        .attr 'fill', (d) ->
+          if STYLES[d.data.key]?.color
+            STYLES[d.data.key]?.color
+          else
+            color(d.data.key)
         .attr 'd', arc
 
   render: ->
@@ -753,7 +1143,14 @@ ShipHPChart = React.createClass(
       width: 200
       height: 200
     }
+  componentDidMount: ->
+    @renderChart()
   componentDidUpdate: ->
+    @renderChart()
+  renderChart: ->
+    if @props.data.length == 0
+      return
+
     el = @getDOMNode()
 
     radius = 90
