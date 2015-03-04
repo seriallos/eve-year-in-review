@@ -888,11 +888,26 @@ IndustryBlueprintPanel = React.createClass(
     dom.div null,
       dom.h3 null, "Blueprints"
       dom.ul null,
-        dom.li null, "Copied #{@props.stats.industryRamJobsCompletedCopyBlueprint} blueprints"
-        dom.li null, "#{@props.stats.industryRamJobsCompletedMaterialProductivity} ME jobs"
-        dom.li null, "#{@props.stats.industryRamJobsCompletedTimeProductivity} TE jobs"
-        dom.li null, "#{@props.stats.industryRamJobsCompletedInvention} invention jobs"
-        dom.li null, "#{@props.stats.industryRamJobsCompletedReverseEngineering} reverse engineering jobs"
+        dom.li null,
+          dom.img {src: 'images/icons/UI/Industry/copying.png'}
+          ' '
+          "Copied #{@props.stats.industryRamJobsCompletedCopyBlueprint} blueprints"
+        dom.li null,
+          dom.img {src: 'images/icons/UI/Industry/researchMaterial.png'}
+          ' '
+          "#{@props.stats.industryRamJobsCompletedMaterialProductivity} ME jobs"
+        dom.li null, 
+          dom.img {src: 'images/icons/UI/Industry/researchTime.png'}
+          ' '
+          "#{@props.stats.industryRamJobsCompletedTimeProductivity} TE jobs"
+        dom.li null,
+          dom.img {src: 'images/icons/UI/Industry/invention.png'}
+          ' '
+          "#{@props.stats.industryRamJobsCompletedInvention} invention jobs"
+        dom.li null,
+          dom.img {src: 'images/icons/UI/Industry/manufacturing.png'}
+          ' '
+          "#{@props.stats.industryRamJobsCompletedReverseEngineering} reverse engineering jobs"
 )
 
 MiningPanel = React.createClass(
