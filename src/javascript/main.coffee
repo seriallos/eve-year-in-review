@@ -192,6 +192,27 @@ STYLES =
     label: 'Veldspar'
     iconId: 1230
 
+  great:
+    label: 'Excellent'
+    color: '#0C2174'
+    icon: 'images/standingsExcellent.png'
+  good:
+    label: 'Good'
+    color: '#3E5FBF'
+    icon: 'images/standingsGood.png'
+  neutral:
+    label: 'Neutral'
+    color: '#868786'
+    icon: 'images/standingsNeutral.png'
+  bad:
+    label: 'Bad'
+    color: '#A94700'
+    icon: 'images/standingsBad.png'
+  horrible:
+    label: 'Terrible'
+    color: '#7C0000'
+    icon: 'images/standingsTerrible.png'
+
 # alias styles
 STYLES.HighSec = STYLES.high
 STYLES.LowSec = STYLES.low
@@ -278,6 +299,12 @@ StatsUI = React.createClass(
 
     miningPanel = React.createElement(MiningPanel, {stats: @state.stats})
 
+    iskPanel = React.createElement(ISKPanel, {stats: @state.stats})
+    marketPanel = React.createElement(MarketPanel, {stats: @state.stats})
+
+    contactsSelfPanel = React.createElement(ContactsPanel, {context: 'self', stats: @state.stats})
+    contactsOtherPanel = React.createElement(ContactsPanel, {context: 'other', stats: @state.stats})
+
     rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
 
     dom.div {className: 'container'},
@@ -337,12 +364,18 @@ StatsUI = React.createClass(
         dom.div {className: 'col-md-6'}, miningPanel
 
       # Markets
+      dom.div {className: 'row'},
+        dom.div {className: 'col-md-6'}, iskPanel
+        dom.div {className: 'col-md-6'}, marketPanel
 
       # Social
+      dom.div {className: 'row'},
+        dom.div {className: 'col-md-6'}, contactsSelfPanel
+        dom.div {className: 'col-md-6'}, contactsOtherPanel
 
       # Misc
 
-      rawStatsList
+      #rawStatsList
 )
 
 Title = React.createClass(
@@ -946,6 +979,69 @@ MiningPanel = React.createClass(
         React.createElement(PieDataPanel,{data: @chartData()})
 )
 
+ISKPanel = React.createClass(
+  displayName: 'ISKPanel'
+  render: ->
+    dom.div null,
+      dom.ul null,
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.iskIn)} ISK earned total"
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.iskOut)} ISK spent total"
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketISKGained)} ISK earned from the market"
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketISKSpent)} ISK spent on the market"
+)
+
+MarketPanel = React.createClass(
+  displayName: 'MarketPanel'
+  render: ->
+    dom.div null,
+      dom.ul null,
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketBuyOrdersPlaced)} buy orders placed"
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketSellOrdersPlaced)} sell orders placed"
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketCreateContractsTotal)} contacts created"
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketAcceptContractsItemExchange)} item contracts accepted"
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketAcceptContractsCourier)} courier contracts accepted"
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketDeliverCourierContract)} courier contracts delivered"
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketModifyMarketOrder)} market orders modified"
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketCancelMarketOrder)} market orders cancelled"
+)
+
+ContactsPanel = React.createClass(
+  displayName: 'ContactsPanel'
+  render: ->
+    if @props.context == 'self'
+      str = 'Add'
+      title = 'Contacts You\'ve Added'
+    else
+      str = 'AddedAs'
+      title = 'How You Have Been Added'
+    data = [
+      {
+        key: 'great'
+        value: @props.stats["social#{str}ContactHigh"]
+      }
+      {
+        key: 'good'
+        value: @props.stats["social#{str}ContactGood"]
+      }
+      {
+        key: 'neutral'
+        value: @props.stats["social#{str}ContactNeutral"]
+      }
+      {
+        key: 'bad'
+        value: @props.stats["social#{str}ContactBad"]
+      }
+      {
+        key: 'horrible'
+        value: @props.stats["social#{str}ContactHorrible"]
+      }
+    ]
+    dom.div {className: 'container'},
+      dom.h3 null, title
+      React.createElement(PieDataPanel, {data: data})
+
+)
+
 PieDataPanel = React.createClass(
   displayName: 'PieDataPanel'
   getDefaultProps: ->
@@ -986,6 +1082,9 @@ PieDataTable = React.createClass(
       if STYLES[d.key]?.iconId
         iconCell = dom.td null,
           dom.img {src: eveIconUrl(STYLES[d.key].iconId), width: 32, height: 32}, null
+      else if STYLES[d.key]?.icon
+        iconCell = dom.td null,
+          dom.img {src: STYLES[d.key].icon}, null
       else
         iconCell = dom.td null, null
       return dom.tr {key: d.key},
