@@ -298,6 +298,8 @@ StatsUI = React.createClass(
 
     pveStats = React.createElement(PvePanel, {stats: @state.stats})
 
+    miscModules = React.createElement(MiscModulePanel, {stats: @state.stats})
+
     industryJobs = React.createElement(IndustryJobsPanel, {stats: @state.stats})
     blueprints = React.createElement(IndustryBlueprintPanel, {stats: @state.stats})
 
@@ -308,6 +310,8 @@ StatsUI = React.createClass(
 
     contactsSelfPanel = React.createElement(ContactsPanel, {context: 'self', stats: @state.stats})
     contactsOtherPanel = React.createElement(ContactsPanel, {context: 'other', stats: @state.stats})
+
+    socialMiscPanel = React.createElement(SocialMiscPanel, {stats: @state.stats})
 
     rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
 
@@ -358,6 +362,9 @@ StatsUI = React.createClass(
       dom.div {className: 'row'},
         dom.div {className: 'col-md-12'}, pveStats
 
+      dom.div {className: 'row'},
+        dom.div {className: 'col-md-12'}, miscModules
+
       # Industry
       dom.div {className: 'row'},
         dom.div {className: 'col-md-6'}, industryJobs
@@ -376,6 +383,9 @@ StatsUI = React.createClass(
       dom.div {className: 'row'},
         dom.div {className: 'col-md-6'}, contactsSelfPanel
         dom.div {className: 'col-md-6'}, contactsOtherPanel
+
+      dom.div {className: 'row'},
+        dom.div {className: 'col-md-6'}, socialMiscPanel
 
       # Misc
 
@@ -838,6 +848,21 @@ PvePanel = React.createClass(
         dom.li null, "Webbed #{@props.stats.combatWebifiedbyNPC} times by NPCs"
 )
 
+MiscModulePanel = React.createClass(
+  displayName: 'MiscModulePanel'
+  render: ->
+    dom.div {className: 'container'},
+      dom.h3 null, 'Modules'
+      dom.ul null,
+        dom.li null, "Lit #{@props.stats.moduleActivationsCyno} cynos"
+        dom.li null, "Cloaked #{@props.stats.moduleActivationsCyno} times"
+        dom.li null, "Activated #{@props.stats.moduleActivationsFleetAssist} links"
+        dom.li null, "#{@props.stats.moduleActivationsEwarDampener} sensor damp activations"
+        dom.li null, "Violated SPACE BUSHIDO #{@props.stats.moduleActivationsEwarECM} times (ECM Activations)"
+        dom.li null, "#{@props.stats.moduleActivationsEwarTargetPainter} TP activations"
+        dom.li null, "#{@props.stats.moduleActivationsEwarVampire} NOS activations"
+)
+
 IndustryJobsPanel = React.createClass(
   displayName: 'IndustryJobsPanel'
   chartData: ->
@@ -1029,10 +1054,12 @@ ContactsPanel = React.createClass(
   render: ->
     if @props.context == 'self'
       str = 'Add'
-      title = 'Contacts You\'ve Added'
+      title = 'How You See Others'
+      subtitle = 'Your Contacts'
     else
       str = 'AddedAs'
-      title = 'How You Have Been Added'
+      title = 'How Others See You'
+      subtitle = 'Others Contacts'
     data = [
       {
         key: 'great'
@@ -1056,9 +1083,40 @@ ContactsPanel = React.createClass(
       }
     ]
     dom.div {className: 'container'},
-      dom.h3 null, title
+      dom.h3 null,
+        title
       React.createElement(PieDataPanel, {data: data})
 
+)
+
+SocialMiscPanel = React.createClass(
+  displayName: 'SocialMiscPanel'
+  render: ->
+    dom.div {className: 'container'},
+      dom.ul null,
+        dom.li null, "#{Intl.NumberFormat().format(@props.stats.socialChatTotalMessageLength)} characters written in chat"
+        dom.li null, "#{@props.stats.socialMailsSent} mails sent"
+        dom.li null, "#{@props.stats.socialMailsReceived} mails received"
+        dom.li null, "#{@props.stats.socialDirectTrades} direct trades made"
+        dom.li null, "#{@props.stats.socialFleetJoins} fleets joined"
+        dom.li null, "#{@props.stats.socialFleetBroadcasts} fleet broadcasts made"
+)
+
+MiscStats = React.createClass(
+  displayName: 'MiscStats'
+  render: ->
+    dom.div {className: 'container'},
+      dom.ul null,
+        dom.li null, "#{@props.stats.genericConeScans} Directional Scans"
+        dom.li null, "#{@props.stats.genericRequestScans} Probe Scans"
+        dom.li null, "#{@props.stats.travelWarpsToCelestial} warps to celestial"
+        dom.li null, "#{@props.stats.travelWarpsToBookmark} warps to bookmark"
+        dom.li null, "#{@props.stats.travelWarpsToFleetMember} warps to fleet member"
+        dom.li null, "#{@props.stats.travelWarpsToScanResult} warps to scan result"
+        dom.li null, "#{@props.stats.travelAlignTo} aligns"
+        dom.li null, "#{@props.stats.travelAccelerationGateActivations} acceleration gate activations"
+        dom.li null, "#{@props.stats.combatSelfDestructs} self destructs"
+        dom.li null, "#{@props.stats.inventoryTrashItemQuantity} items trashed"
 )
 
 PieDataPanel = React.createClass(
