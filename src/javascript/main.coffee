@@ -33,6 +33,10 @@ $ = require 'jquery'
 d3 = require 'd3'
 _ = require 'lodash'
 
+# polyfill for safari
+if not Intl
+  Intl = require 'intl'
+
 CharacterStats = require './character_stats'
 CharacterFacts = require './character_facts'
 
