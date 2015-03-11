@@ -403,7 +403,7 @@ StatsUI = React.createClass(
           dom.div {className: 'col-md-6'}, repsReceivedPanel
 
         dom.div {className: 'row'},
-          dom.div {className: 'col-md-12'}, selfRepPanel
+          dom.div {className: 'col-md-6'}, selfRepPanel
 
         # PVE Stats
 
@@ -449,7 +449,7 @@ Title = React.createClass(
 CharacterInfoPanel = React.createClass(
   displayName: 'CharacterInfoPanel'
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: 'row'},
       dom.div {className: 'col-md-4'},
         React.createElement(CharacterAvatar, {id: @props.character.id})
       dom.div {className: 'col-md-8'},
@@ -492,7 +492,7 @@ TravelJumpsPanel = React.createClass(
     ]
     return data
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: ''},
       dom.h3 null, 'Stargate / Wormhole Jumps'
       React.createElement(PieDataPanel,{data: @chartData(), chartType: 'pie'})
 )
@@ -520,7 +520,7 @@ TravelDistancePanel = React.createClass(
     ]
     return data
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: ''},
       dom.h3 null, 'Warp Distance Traveled (AU)'
       React.createElement(PieDataPanel,{data: @chartData(), chartType: 'pie'})
 )
@@ -667,7 +667,7 @@ WeaponUsagePanel = React.createClass(
     ]
     return data
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: ''},
       dom.h3 null,
         'Damage Dealt'
         ' '
@@ -714,7 +714,7 @@ DamageTakenPanel = React.createClass(
     ]
     return data
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: ''},
       dom.h3 null,
         'Damage Taken'
         ' '
@@ -746,7 +746,7 @@ DamageAnalogyPanel = React.createClass(
       dom.h4 {className: 'pull-right'},
         dom.em null,"You have dealt enough damage to kill #{numShips} "
           dom.a {href: ship.fit}, ship.pluralName
-      dom.div {className: 'container'}, stamps
+      dom.div {className: 'row'}, stamps
 
 )
 
@@ -827,7 +827,7 @@ SelfRepPanel = React.createClass(
     ]
     return data
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: 'row'},
       dom.h3 null, 'Local Reps'
         React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp'})
 )
@@ -851,7 +851,7 @@ RepsGivenPanel = React.createClass(
     ]
     return data
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: 'row'},
       dom.h3 null, 'Remote Reps Given'
         React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp'})
 )
@@ -875,7 +875,7 @@ RepsReceivedPanel = React.createClass(
     ]
     return data
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: 'row'},
       dom.h3 null, 'Reps Received'
         React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp'})
 )
@@ -899,7 +899,7 @@ PvePanel = React.createClass(
 MiscModulePanel = React.createClass(
   displayName: 'MiscModulePanel'
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: ''},
       dom.h3 null, 'Modules'
       dom.ul null,
         dom.li null, "Lit #{@props.stats.moduleActivationsCyno} cynos"
@@ -954,7 +954,7 @@ IndustryJobsPanel = React.createClass(
     ]
     return data
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: 'row'},
       dom.h3 null, 'Manufacturing Jobs'
         React.createElement(PieDataPanel,{data: @chartData()})
 )
@@ -1066,7 +1066,7 @@ MiningPanel = React.createClass(
     ]
     return data
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: 'row'},
       dom.h3 null, 'Mining'
         React.createElement(PieDataPanel,{data: @chartData()})
 )
@@ -1130,7 +1130,7 @@ ContactsPanel = React.createClass(
         value: @props.stats["social#{str}ContactHorrible"]
       }
     ]
-    dom.div {className: 'container'},
+    dom.div {className: 'row'},
       dom.h3 null,
         title
       React.createElement(PieDataPanel, {data: data})
@@ -1140,7 +1140,7 @@ ContactsPanel = React.createClass(
 SocialMiscPanel = React.createClass(
   displayName: 'SocialMiscPanel'
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: ''},
       dom.ul null,
         dom.li null, "#{Intl.NumberFormat().format(@props.stats.socialChatTotalMessageLength)} characters written in chat"
         dom.li null, "#{@props.stats.socialMailsSent} mails sent"
@@ -1153,7 +1153,7 @@ SocialMiscPanel = React.createClass(
 MiscStats = React.createClass(
   displayName: 'MiscStats'
   render: ->
-    dom.div {className: 'container'},
+    dom.div {className: ''},
       dom.ul null,
         dom.li null, "#{@props.stats.genericConeScans} Directional Scans"
         dom.li null, "#{@props.stats.genericRequestScans} Probe Scans"
@@ -1193,10 +1193,10 @@ PieDataPanel = React.createClass(
         chartElementType = ShipHPChart
         sortFn = (a, b) -> return HP_BAR_ORDER.indexOf(a.key) - HP_BAR_ORDER.indexOf(b.key)
     data = @deriveData(sortFn)
-    dom.div null,
-      dom.div {className: 'col-md-2'},
+    dom.div {className: 'row'},
+      dom.div {className: 'col-sm-4'},
         React.createElement(chartElementType, {data: data})
-      dom.div {className: 'col-md-3'},
+      dom.div {className: 'col-sm-6'},
         React.createElement(PieDataTable,{data: data, total: @total})
 )
 
