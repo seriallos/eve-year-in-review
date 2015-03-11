@@ -28,10 +28,17 @@
 # * PI Stats?
 # * Industry stats - number of runs, not quantity of output (charges throw off the stats)
 
+SSO_HOST = 'https://login.eveonline.com'
+SSO_CALLBACK_URL = 'http://localhost:3000'
+SSO_CLIENT_ID = '67a0cc0f68d34e77b9751f8c75dd2e31'
+SSO_SECRET_KEY = 'hcw6vtxJPHyOuxddWCLP5sTpFILzoiuckk6mAqYc'
+
 React = require 'react'
-$ = require 'jquery'
+request = require 'request'
+http = require 'http'
 d3 = require 'd3'
 _ = require 'lodash'
+qs = require 'querystring'
 
 # polyfill for safari
 if not Intl
@@ -235,6 +242,8 @@ StatsUI = React.createClass(
   displayName: 'CharacterStatsUI'
   getInitialState: ->
     return {
+      ssoState: 'login'
+      ssoCode: null
       stats: null
       character:
         name: 'Bellatroix'
@@ -242,154 +251,193 @@ StatsUI = React.createClass(
       year: 2014
     }
   componentDidMount: ->
-    @loadData()
+    search = window.location.search.substring(1)
+    queryParts = qs.parse(search)
+    if queryParts.code
+      @setState {ssoState: 'loading', ssoCode: queryParts.code}
+      opts =
+        url: "#{SSO_HOST}/oauth/token"
+        method: 'POST'
+        auth:
+          user: SSO_CLIENT_ID
+          pass: SSO_SECRET_KEY
+        form:
+          grant_type: 'authorization_code'
+          code: queryParts.code
+      request opts, (err, res, body) =>
+        console.log err
+        console.log body
+        @setState {ssoState: 'loaded'}
+        @loadData()
   loadData: ->
     if window.location.hash
       source = "#{window.location.hash.substring(1)}"
     else
       source = "null_pvp"
       source = _.sample samples
-    $.get "./sampledata/#{source}.json", (data) =>
+    host = window.location.host
+    proto = window.location.protocol
+    opts =
+      url: "#{proto}//#{host}/sampledata/#{source}.json"
+      method: 'GET'
+      json: true
+    request opts, (err, res, data) =>
       stats = new CharacterStats(data)
       @setState {stats: stats, year: data.aggregateYear}
+
   render: ->
-    if not @state.stats
-      return dom.div null, "Loading..."
+    if @state.ssoState == 'login'
+      ssoLoginImage = 'https://images.contentful.com/idjq7aai9ylm/4PTzeiAshqiM8osU2giO0Y/5cc4cb60bac52422da2e45db87b6819c/EVE_SSO_Login_Buttons_Large_White.png?w=270&h=45'
+      ssoParams =
+        response_type: 'code'
+        redirect_uri: SSO_CALLBACK_URL
+        client_id: SSO_CLIENT_ID
+        scope: ''
+        state: 'testState'
 
-    facts = new CharacterFacts(@state.stats).getFacts()
+      ssoUrl = "#{SSO_HOST}/oauth/authorize/?#{qs.stringify ssoParams}"
+      return dom.a {href: ssoUrl}, dom.img {src: ssoLoginImage}
+    else if @state.ssoState == 'loading'
+      return dom.div null, "Verifying SSO..."
+    else
 
-    title = React.createElement(Title, {character: @state.character, year: @state.year})
+      if not @state.stats
+        return dom.div null, "Loading Your Stats..."
 
-    charInfoPanel = React.createElement(CharacterInfoPanel, {character: @state.character, facts: facts})
+      facts = new CharacterFacts(@state.stats).getFacts()
 
-    travelJumpsPanel = React.createElement(TravelJumpsPanel, {stats: @state.stats})
-    travelDistancePanel = React.createElement(TravelDistancePanel, {stats: @state.stats})
+      title = React.createElement(Title, {character: @state.character, year: @state.year})
 
-    distanceAnalogy = React.createElement(DistanceAnalogyPanel, {distance: @state.stats?.total 'travelDistanceWarped'})
+      charInfoPanel = React.createElement(CharacterInfoPanel, {character: @state.character, facts: facts})
 
-    max = _.max [
-      @state.stats?.combatKillsHighSec
-      @state.stats?.combatKillsLowSec
-      @state.stats?.combatKillsNullSec
-      @state.stats?.combatKillsWormhole
+      travelJumpsPanel = React.createElement(TravelJumpsPanel, {stats: @state.stats})
+      travelDistancePanel = React.createElement(TravelDistancePanel, {stats: @state.stats})
 
-      @state.stats?.combatDeathsHighSec
-      @state.stats?.combatDeathsLowSec
-      @state.stats?.combatDeathsNullSec
-      @state.stats?.combatDeathsWormhole
-    ]
+      distanceAnalogy = React.createElement(DistanceAnalogyPanel, {distance: @state.stats?.total 'travelDistanceWarped'})
 
-    killsPanel = React.createElement(KillsPanel, {stats: @state.stats, max: max})
-    deathsPanel = React.createElement(DeathsPanel, {stats: @state.stats, max: max})
+      max = _.max [
+        @state.stats?.combatKillsHighSec
+        @state.stats?.combatKillsLowSec
+        @state.stats?.combatKillsNullSec
+        @state.stats?.combatKillsWormhole
 
-    weaponUsagePanel = React.createElement(WeaponUsagePanel, {stats: @state.stats})
-    damageTakenPanel = React.createElement(DamageTakenPanel, {stats: @state.stats})
+        @state.stats?.combatDeathsHighSec
+        @state.stats?.combatDeathsLowSec
+        @state.stats?.combatDeathsNullSec
+        @state.stats?.combatDeathsWormhole
+      ]
 
-    damageAnalogy = React.createElement(DamageAnalogyPanel, {damage: @state.stats?.totalDamageDealt})
+      killsPanel = React.createElement(KillsPanel, {stats: @state.stats, max: max})
+      deathsPanel = React.createElement(DeathsPanel, {stats: @state.stats, max: max})
 
-    pvpModulesUsage = React.createElement(PvpModulesUsage, {stats: @state.stats})
-    pvpModulesAgainst = React.createElement(PvpModulesAgainst, {stats: @state.stats})
+      weaponUsagePanel = React.createElement(WeaponUsagePanel, {stats: @state.stats})
+      damageTakenPanel = React.createElement(DamageTakenPanel, {stats: @state.stats})
 
-    miscPvpStats = React.createElement(MiscPvpStats, {stats: @state.stats})
+      damageAnalogy = React.createElement(DamageAnalogyPanel, {damage: @state.stats?.totalDamageDealt})
 
-    selfRepPanel = React.createElement(SelfRepPanel, {stats: @state.stats})
-    repsReceivedPanel = React.createElement(RepsReceivedPanel, {stats: @state.stats})
-    repsGivenPanel = React.createElement(RepsGivenPanel, {stats: @state.stats})
+      pvpModulesUsage = React.createElement(PvpModulesUsage, {stats: @state.stats})
+      pvpModulesAgainst = React.createElement(PvpModulesAgainst, {stats: @state.stats})
 
-    pveStats = React.createElement(PvePanel, {stats: @state.stats})
+      miscPvpStats = React.createElement(MiscPvpStats, {stats: @state.stats})
 
-    miscModules = React.createElement(MiscModulePanel, {stats: @state.stats})
+      selfRepPanel = React.createElement(SelfRepPanel, {stats: @state.stats})
+      repsReceivedPanel = React.createElement(RepsReceivedPanel, {stats: @state.stats})
+      repsGivenPanel = React.createElement(RepsGivenPanel, {stats: @state.stats})
 
-    industryJobs = React.createElement(IndustryJobsPanel, {stats: @state.stats})
-    blueprints = React.createElement(IndustryBlueprintPanel, {stats: @state.stats})
+      pveStats = React.createElement(PvePanel, {stats: @state.stats})
 
-    miningPanel = React.createElement(MiningPanel, {stats: @state.stats})
+      miscModules = React.createElement(MiscModulePanel, {stats: @state.stats})
 
-    iskPanel = React.createElement(ISKPanel, {stats: @state.stats})
-    marketPanel = React.createElement(MarketPanel, {stats: @state.stats})
+      industryJobs = React.createElement(IndustryJobsPanel, {stats: @state.stats})
+      blueprints = React.createElement(IndustryBlueprintPanel, {stats: @state.stats})
 
-    contactsSelfPanel = React.createElement(ContactsPanel, {context: 'self', stats: @state.stats})
-    contactsOtherPanel = React.createElement(ContactsPanel, {context: 'other', stats: @state.stats})
+      miningPanel = React.createElement(MiningPanel, {stats: @state.stats})
 
-    socialMiscPanel = React.createElement(SocialMiscPanel, {stats: @state.stats})
+      iskPanel = React.createElement(ISKPanel, {stats: @state.stats})
+      marketPanel = React.createElement(MarketPanel, {stats: @state.stats})
 
-    rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
+      contactsSelfPanel = React.createElement(ContactsPanel, {context: 'self', stats: @state.stats})
+      contactsOtherPanel = React.createElement(ContactsPanel, {context: 'other', stats: @state.stats})
 
-    dom.div {className: 'container'},
+      socialMiscPanel = React.createElement(SocialMiscPanel, {stats: @state.stats})
 
-      title
+      rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
 
-      charInfoPanel
+      dom.div {className: 'container'},
 
-      # Residence / Distance
+        title
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-6'}, travelJumpsPanel
-        dom.div {className: 'col-md-6'}, travelDistancePanel
+        charInfoPanel
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-12'}, distanceAnalogy
+        # Residence / Distance
 
-      # PVP
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, travelJumpsPanel
+          dom.div {className: 'col-md-6'}, travelDistancePanel
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-6'}, killsPanel
-        dom.div {className: 'col-md-6'}, deathsPanel
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, distanceAnalogy
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-6'}, weaponUsagePanel
-        dom.div {className: 'col-md-6'}, damageTakenPanel
+        # PVP
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-12'}, damageAnalogy
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, killsPanel
+          dom.div {className: 'col-md-6'}, deathsPanel
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-6'}, pvpModulesUsage
-        dom.div {className: 'col-md-6'}, pvpModulesAgainst
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, weaponUsagePanel
+          dom.div {className: 'col-md-6'}, damageTakenPanel
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-6'}, miscPvpStats
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, damageAnalogy
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-6'}, repsGivenPanel
-        dom.div {className: 'col-md-6'}, repsReceivedPanel
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, pvpModulesUsage
+          dom.div {className: 'col-md-6'}, pvpModulesAgainst
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-12'}, selfRepPanel
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, miscPvpStats
 
-      # PVE Stats
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, repsGivenPanel
+          dom.div {className: 'col-md-6'}, repsReceivedPanel
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-12'}, pveStats
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, selfRepPanel
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-12'}, miscModules
+        # PVE Stats
 
-      # Industry
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-6'}, industryJobs
-        dom.div {className: 'col-md-6'}, blueprints
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, pveStats
 
-      # Mining
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-6'}, miningPanel
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, miscModules
 
-      # Markets
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-6'}, iskPanel
-        dom.div {className: 'col-md-6'}, marketPanel
+        # Industry
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, industryJobs
+          dom.div {className: 'col-md-6'}, blueprints
 
-      # Social
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-6'}, contactsSelfPanel
-        dom.div {className: 'col-md-6'}, contactsOtherPanel
+        # Mining
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, miningPanel
 
-      dom.div {className: 'row'},
-        dom.div {className: 'col-md-6'}, socialMiscPanel
+        # Markets
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, iskPanel
+          dom.div {className: 'col-md-6'}, marketPanel
 
-      # Misc
+        # Social
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, contactsSelfPanel
+          dom.div {className: 'col-md-6'}, contactsOtherPanel
 
-      #rawStatsList
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, socialMiscPanel
+
+        # Misc
+
+        #rawStatsList
 )
 
 Title = React.createClass(
