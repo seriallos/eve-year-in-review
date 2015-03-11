@@ -251,24 +251,24 @@ StatsUI = React.createClass(
       year: 2014
     }
   componentDidMount: ->
-    search = window.location.search.substring(1)
-    queryParts = qs.parse(search)
-    if queryParts.code
-      @setState {ssoState: 'loading', ssoCode: queryParts.code}
-      opts =
-        url: "#{SSO_HOST}/oauth/token"
-        method: 'POST'
-        auth:
-          user: SSO_CLIENT_ID
-          pass: SSO_SECRET_KEY
-        form:
-          grant_type: 'authorization_code'
-          code: queryParts.code
-      request opts, (err, res, body) =>
-        console.log err
-        console.log body
-        @setState {ssoState: 'loaded'}
-        @loadData()
+    #search = window.location.search.substring(1)
+    #queryParts = qs.parse(search)
+    #if queryParts.code
+    #  @setState {ssoState: 'loading', ssoCode: queryParts.code}
+    #  opts =
+    #    url: "#{SSO_HOST}/oauth/token"
+    #    method: 'POST'
+    #    auth:
+    #      user: SSO_CLIENT_ID
+    #      pass: SSO_SECRET_KEY
+    #    form:
+    #      grant_type: 'authorization_code'
+    #      code: queryParts.code
+    #  request opts, (err, res, body) =>
+    #    console.log err
+    #    console.log body
+    @setState {ssoState: 'loaded'}
+    @loadData()
   loadData: ->
     if window.location.hash
       source = "#{window.location.hash.substring(1)}"
