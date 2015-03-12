@@ -251,30 +251,27 @@ StatsUI = React.createClass(
       year: 2014
     }
   componentDidMount: ->
-    #search = window.location.search.substring(1)
-    #queryParts = qs.parse(search)
-    #if queryParts.code
-    #  @setState {ssoState: 'loading', ssoCode: queryParts.code}
-    #  opts =
-    #    url: "#{SSO_HOST}/oauth/token"
-    #    method: 'POST'
-    #    auth:
-    #      user: SSO_CLIENT_ID
-    #      pass: SSO_SECRET_KEY
-    #    form:
-    #      grant_type: 'authorization_code'
-    #      code: queryParts.code
-    #  request opts, (err, res, body) =>
-    #    console.log err
-    #    console.log body
-    @setState {ssoState: 'loaded'}
-    @loadData()
+    hash = window.location.hash.substring(1)
+    queryParts = qs.parse(hash)
+    if queryParts.access_token
+      @setState {ssoState: 'loading', ssoCode: queryParts.code}
+      #opts =
+      #  url: "#{SSO_HOST}/oauth/token"
+      #  method: 'POST'
+      #  auth:
+      #    user: SSO_CLIENT_ID
+      #    pass: SSO_SECRET_KEY
+      #  form:
+      #    grant_type: 'authorization_code'
+      #    code: queryParts.code
+      #request opts, (err, res, body) =>
+      #  console.log err
+      #  console.log body
+      @setState {ssoState: 'loaded'}
+      @loadData()
   loadData: ->
-    if window.location.hash
-      source = "#{window.location.hash.substring(1)}"
-    else
-      source = "null_pvp"
-      source = _.sample samples
+    source = "null_pvp"
+    source = _.sample samples
     host = window.location.host
     proto = window.location.protocol
     opts =
@@ -289,7 +286,7 @@ StatsUI = React.createClass(
     if @state.ssoState == 'login'
       ssoLoginImage = 'https://images.contentful.com/idjq7aai9ylm/4PTzeiAshqiM8osU2giO0Y/5cc4cb60bac52422da2e45db87b6819c/EVE_SSO_Login_Buttons_Large_White.png?w=270&h=45'
       ssoParams =
-        response_type: 'code'
+        response_type: 'token'
         redirect_uri: SSO_CALLBACK_URL
         client_id: SSO_CLIENT_ID
         scope: ''
