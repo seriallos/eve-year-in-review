@@ -28,17 +28,31 @@
 # * PI Stats?
 # * Industry stats - number of runs, not quantity of output (charges throw off the stats)
 
-SSO_HOST = 'https://login.eveonline.com'
+env = 'dev'
+
+CONFIG =
+  dev:
+    sso_host: 'https://sisilogin.testeveonline.com'
+    sso_client_id: '448241b523d24f0c947ea58a4443bb02'
+    crest_host: 'https://api-sisi.testeveonline.com'
+  live:
+    sso_host: 'https://login.eveonline.com'
+    sso_client_id: '67a0cc0f68d34e77b9751f8c75dd2e31'
+    crest_host: 'https://crest-tq.eveonline.com'
+
+SSO_PROTO = 'https'
 SSO_CALLBACK_URL = 'http://localhost:3000'
-SSO_CLIENT_ID = '67a0cc0f68d34e77b9751f8c75dd2e31'
-SSO_SECRET_KEY = 'hcw6vtxJPHyOuxddWCLP5sTpFILzoiuckk6mAqYc'
+SSO_HOST = CONFIG[env].sso_host
+SSO_CLIENT_ID = CONFIG[env].sso_client_id
+CREST_HOST = CONFIG[env].crest_host
 
 React = require 'react'
 request = require 'request'
-http = require 'http'
+$ = require 'jquery'
 d3 = require 'd3'
 _ = require 'lodash'
 qs = require 'querystring'
+urlParse = require('url').parse
 
 # polyfill for safari
 if not Intl
@@ -243,7 +257,7 @@ StatsUI = React.createClass(
   getInitialState: ->
     return {
       ssoState: 'login'
-      ssoCode: null
+      token: null
       stats: null
       character:
         name: 'Bellatroix'
@@ -254,21 +268,35 @@ StatsUI = React.createClass(
     hash = window.location.hash.substring(1)
     queryParts = qs.parse(hash)
     if queryParts.access_token
-      @setState {ssoState: 'loading', ssoCode: queryParts.code}
-      #opts =
-      #  url: "#{SSO_HOST}/oauth/token"
-      #  method: 'POST'
-      #  auth:
-      #    user: SSO_CLIENT_ID
-      #    pass: SSO_SECRET_KEY
-      #  form:
-      #    grant_type: 'authorization_code'
-      #    code: queryParts.code
-      #request opts, (err, res, body) =>
-      #  console.log err
-      #  console.log body
-      @setState {ssoState: 'loaded'}
-      @loadData()
+      token = queryParts.access_token
+      @setState {ssoState: 'loading', token: token}
+      # set up default ajax configurations
+      $.ajaxSetup({
+          accepts: "application/json, charset=utf-8"
+          crossDomain: true
+          type: "GET"
+          dataType: "json"
+          headers:
+            Authorization: "Bearer #{token}"
+          error: (xhr, status, error) ->
+              console.error(error);
+      })
+      # get the character URL from decode
+      $.getJSON CREST_HOST, (data, status, xhr) ->
+        console.log data
+      $.getJSON "#{CREST_HOST}/decode/", (data, status, xhr) =>
+        charUrlParsed = urlParse data.character.href
+        [ foo, foo, characterId ] = charUrlParsed.path.split '/'
+        @setState {character: {id: characterId, name: characterId}}
+        statsUrl = data.character.href + "statistics/year/2014/"
+        $.getJSON data.character.href, (data, status, xhr) =>
+          console.log data
+        $.getJSON statsUrl, (data, status, xhr) =>
+          stats = new CharacterStats(data)
+          @setState {stats: stats, year: 2014, ssoState: 'loaded'}
+          console.log data
+          console.log status
+
   loadData: ->
     source = "null_pvp"
     source = _.sample samples
@@ -280,7 +308,7 @@ StatsUI = React.createClass(
       json: true
     request opts, (err, res, data) =>
       stats = new CharacterStats(data)
-      @setState {stats: stats, year: data.aggregateYear}
+      @setState {stats: stats, year: data.aggregateYear, ssoState: 'loaded'}
 
   render: ->
     if @state.ssoState == 'login'
@@ -289,7 +317,8 @@ StatsUI = React.createClass(
         response_type: 'token'
         redirect_uri: SSO_CALLBACK_URL
         client_id: SSO_CLIENT_ID
-        scope: ''
+        #scope: 'publicData'
+        scope: 'publicData characterStatisticsRead'
         state: 'testState'
 
       ssoUrl = "#{SSO_HOST}/oauth/authorize/?#{qs.stringify ssoParams}"
@@ -357,6 +386,8 @@ StatsUI = React.createClass(
       contactsOtherPanel = React.createElement(ContactsPanel, {context: 'other', stats: @state.stats})
 
       socialMiscPanel = React.createElement(SocialMiscPanel, {stats: @state.stats})
+
+      miscStats = React.createElement(MiscStats, {stats: @state.stats})
 
       rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
 
@@ -431,6 +462,7 @@ StatsUI = React.createClass(
 
         dom.div {className: 'row'},
           dom.div {className: 'col-md-6'}, socialMiscPanel
+          dom.div {className: 'col-md-6'}, miscStats
 
         # Misc
 
@@ -589,10 +621,11 @@ KillsPanel = React.createClass(
   render: ->
     dom.div null,
       dom.h3 null,
-        'Kills'
+        'Final Blows'
         ' '
         dom.small null, 'PVP'
       React.createElement(BarChart, {data: @chartData(), max: @props.max})
+      dom.div null, "Non-final blows on #{@props.stats?.combatKillsAssists} killmails"
 )
 
 DeathsPanel = React.createClass(
