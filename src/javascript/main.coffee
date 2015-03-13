@@ -40,6 +40,11 @@ CONFIG =
     sso_client_id: '67a0cc0f68d34e77b9751f8c75dd2e31'
     crest_host: 'https://crest-tq.eveonline.com'
 
+host = window.location.host
+proto = window.location.protocol
+
+console.log host, proto
+
 SSO_PROTO = 'https'
 SSO_CALLBACK_URL = 'http://localhost:3000'
 SSO_HOST = CONFIG[env].sso_host
@@ -131,18 +136,20 @@ STYLES =
     label: 'Hull'
     color: 'white'
     iconId: 3663
+
   high:
     label: 'High Sec'
-    color: '#11ee11'
+    color: '#579C48'
   low:
     label: 'Low Sec'
-    color: '#dfdf00'
+    color: '#C0AD23'
   null:
     label: 'Null Sec'
-    color: '#df0000'
+    color: '#8F1024'
   wormhole:
     label: 'Wormholes'
-    color: '#0000df'
+    color: '#476F99'
+
   charge:
     label: 'Charges'
   commodity:
@@ -252,6 +259,35 @@ styleIconUrl = (key, width = 32) ->
 eveIconUrl = (id, width = 32) ->
   return "https://image.eveonline.com/Type/#{id}_#{width}.png"
 
+jrequest = (url, done) ->
+  $.ajaxSetup({
+    error: (xhr, status, error) ->
+      done(error, null, xhr)
+  })
+  $.getJSON url, (data, status, xhr) ->
+    done(null, data, xhr)
+
+humanizeMinutes = (minutes) ->
+  hours = Math.floor(minutes / 60)
+  minutes = minutes % 60
+
+  days = Math.floor(hours / 24)
+  hours = hours % 24
+
+  out = ''
+  if days
+    out += "#{days} days, "
+
+  if hours or days
+    out += "#{hours} hours, "
+
+  out += "#{minutes} minutes"
+
+  return out
+
+numFmt = (number) ->
+  return Intl.NumberFormat().format(number)
+
 StatsUI = React.createClass(
   displayName: 'CharacterStatsUI'
   getInitialState: ->
@@ -266,9 +302,10 @@ StatsUI = React.createClass(
     }
   componentDidMount: ->
     hash = window.location.hash.substring(1)
-    queryParts = qs.parse(hash)
-    if queryParts.access_token
-      token = queryParts.access_token
+    hashParts = qs.parse(hash)
+    #window.location.hash = ''
+    if hashParts.access_token
+      token = hashParts.access_token
       @setState {ssoState: 'loading', token: token}
       # set up default ajax configurations
       $.ajaxSetup({
@@ -279,23 +316,28 @@ StatsUI = React.createClass(
           headers:
             Authorization: "Bearer #{token}"
           error: (xhr, status, error) ->
-              console.error(error);
+            console.log xhr.status
+            console.log(status)
+            console.error(error);
       })
       # get the character URL from decode
-      $.getJSON CREST_HOST, (data, status, xhr) ->
-        console.log data
-      $.getJSON "#{CREST_HOST}/decode/", (data, status, xhr) =>
-        charUrlParsed = urlParse data.character.href
-        [ foo, foo, characterId ] = charUrlParsed.path.split '/'
-        @setState {character: {id: characterId, name: characterId}}
-        statsUrl = data.character.href + "statistics/year/2014/"
-        $.getJSON data.character.href, (data, status, xhr) =>
-          console.log data
-        $.getJSON statsUrl, (data, status, xhr) =>
-          stats = new CharacterStats(data)
-          @setState {stats: stats, year: 2014, ssoState: 'loaded'}
-          console.log data
-          console.log status
+      jrequest CREST_HOST, (error, data, xhr) ->
+        # noop
+      jrequest "#{CREST_HOST}/decode/", (error, data, xhr) =>
+        console.log status
+        if xhr.status == 401
+          @setState {ssoState: 'login', token: null}
+        else
+          console.log "href", data.character.href
+          charUrlParsed = urlParse data.character.href
+          [ foo, foo, characterId ] = charUrlParsed.path.split '/'
+          @setState {character: {id: characterId, name: characterId}}
+          statsUrl = data.character.href + "statistics/year/2014/"
+          $.getJSON data.character.href, (data, status, xhr) =>
+            #console.log data
+          $.getJSON statsUrl, (data, status, xhr) =>
+            stats = new CharacterStats(data)
+            @setState {stats: stats, year: 2014, ssoState: 'loaded'}
 
   loadData: ->
     source = "null_pvp"
@@ -334,7 +376,7 @@ StatsUI = React.createClass(
 
       title = React.createElement(Title, {character: @state.character, year: @state.year})
 
-      charInfoPanel = React.createElement(CharacterInfoPanel, {character: @state.character, facts: facts})
+      charInfoPanel = React.createElement(CharacterInfoPanel, {character: @state.character, facts: facts, stats: @state.stats})
 
       travelJumpsPanel = React.createElement(TravelJumpsPanel, {stats: @state.stats})
       travelDistancePanel = React.createElement(TravelDistancePanel, {stats: @state.stats})
@@ -391,7 +433,7 @@ StatsUI = React.createClass(
 
       rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
 
-      dom.div {className: 'container'},
+      dom.div {className: 'container translucent'},
 
         title
 
@@ -426,12 +468,13 @@ StatsUI = React.createClass(
         dom.div {className: 'row'},
           dom.div {className: 'col-md-6'}, miscPvpStats
 
+        # TODO: without spacer columns, things overlap for some reason.  fix that!
         dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, repsGivenPanel
-          dom.div {className: 'col-md-6'}, repsReceivedPanel
-
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, selfRepPanel
+          dom.div {className: 'col-md-3'}, repsGivenPanel
+          dom.div {className: 'col-md-1'}, ''
+          dom.div {className: 'col-md-3'}, repsReceivedPanel
+          dom.div {className: 'col-md-1'}, ''
+          dom.div {className: 'col-md-3'}, selfRepPanel
 
         # PVE Stats
 
@@ -478,12 +521,23 @@ Title = React.createClass(
 CharacterInfoPanel = React.createClass(
   displayName: 'CharacterInfoPanel'
   render: ->
+    afkPercent = d3.round(100 * (@props.stats.characterMinutesAfk / @props.stats.characterMinutes) )
     dom.div {className: 'row'},
       dom.div {className: 'col-md-4'},
         React.createElement(CharacterAvatar, {id: @props.character.id})
       dom.div {className: 'col-md-8'},
         dom.ul null,
           dom.li null, 'Prefers ' + STYLES[@props.facts?.preferredSec]?.label
+          dom.li null, "Active on #{@props.stats.daysOfActivity} days"
+          dom.li null, "Time online: #{humanizeMinutes @props.stats.characterMinutes}"
+          dom.li null, "AFK time: #{humanizeMinutes @props.stats.characterMinutesAfk} (#{afkPercent}%)"
+          dom.li null, "Total logins: #{numFmt @props.stats.characterSessionsStarted}"
+
+
+          # characterMinutes
+          # characterMinutesAfk
+          # characterSessionsStarted
+          # daysOfActivity
 )
 
 CharacterAvatar = React.createClass(
@@ -592,7 +646,7 @@ DistanceAnalogyPanel = React.createClass(
     speedOfLightAu = speedKmPerS / 149597871
     totalAu = @props.distance
     travelSeconds = totalAu / speedOfLightAu
-    lightSpeedYears = Intl.NumberFormat().format(d3.round(travelSeconds / 60 / 60 / 24/ 365, 1))
+    lightSpeedYears = numFmt(d3.round(travelSeconds / 60 / 60 / 24/ 365, 1))
     distanceText = "#{@state.vehicle.name} would take #{lightSpeedYears} years to cover your total distance travelled."
     dom.h4 {className: 'pull-right'}, dom.em(null,distanceText)
 )
@@ -621,11 +675,11 @@ KillsPanel = React.createClass(
   render: ->
     dom.div null,
       dom.h3 null,
-        'Final Blows'
+        'Killing Blows'
         ' '
         dom.small null, 'PVP'
       React.createElement(BarChart, {data: @chartData(), max: @props.max})
-      dom.div null, "Non-final blows on #{@props.stats?.combatKillsAssists} killmails"
+      dom.div null, "Assisted on #{@props.stats?.combatKillsAssists} additional killmails"
 )
 
 DeathsPanel = React.createClass(
@@ -859,7 +913,7 @@ SelfRepPanel = React.createClass(
   render: ->
     dom.div {className: 'row'},
       dom.h3 null, 'Local Reps'
-        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp'})
+        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical'})
 )
 
 RepsGivenPanel = React.createClass(
@@ -883,7 +937,7 @@ RepsGivenPanel = React.createClass(
   render: ->
     dom.div {className: 'row'},
       dom.h3 null, 'Remote Reps Given'
-        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp'})
+        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical'})
 )
 
 RepsReceivedPanel = React.createClass(
@@ -907,7 +961,7 @@ RepsReceivedPanel = React.createClass(
   render: ->
     dom.div {className: 'row'},
       dom.h3 null, 'Reps Received'
-        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp'})
+        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical'})
 )
 
 PvePanel = React.createClass(
@@ -933,7 +987,7 @@ MiscModulePanel = React.createClass(
       dom.h3 null, 'Modules'
       dom.ul null,
         dom.li null, "Lit #{@props.stats.moduleActivationsCyno} cynos"
-        dom.li null, "Cloaked #{@props.stats.moduleActivationsCyno} times"
+        dom.li null, "Cloaked #{@props.stats.moduleActivationsCloaking} times"
         dom.li null, "Activated #{@props.stats.moduleActivationsFleetAssist} links"
         dom.li null, "#{@props.stats.moduleActivationsEwarDampener} sensor damp activations"
         dom.li null, "Violated SPACE BUSHIDO #{@props.stats.moduleActivationsEwarECM} times (ECM Activations)"
@@ -1106,10 +1160,10 @@ ISKPanel = React.createClass(
   render: ->
     dom.div null,
       dom.ul null,
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.iskIn)} ISK earned total"
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.iskOut)} ISK spent total"
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketISKGained)} ISK earned from the market"
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketISKSpent)} ISK spent on the market"
+        dom.li null, "#{numFmt(@props.stats.iskIn)} ISK earned total"
+        dom.li null, "#{numFmt(@props.stats.iskOut)} ISK spent total"
+        dom.li null, "#{numFmt(@props.stats.marketISKGained)} ISK earned from the market"
+        dom.li null, "#{numFmt(@props.stats.marketISKSpent)} ISK spent on the market"
 )
 
 MarketPanel = React.createClass(
@@ -1117,14 +1171,14 @@ MarketPanel = React.createClass(
   render: ->
     dom.div null,
       dom.ul null,
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketBuyOrdersPlaced)} buy orders placed"
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketSellOrdersPlaced)} sell orders placed"
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketCreateContractsTotal)} contacts created"
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketAcceptContractsItemExchange)} item contracts accepted"
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketAcceptContractsCourier)} courier contracts accepted"
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketDeliverCourierContract)} courier contracts delivered"
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketModifyMarketOrder)} market orders modified"
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.marketCancelMarketOrder)} market orders cancelled"
+        dom.li null, "#{numFmt(@props.stats.marketBuyOrdersPlaced)} buy orders placed"
+        dom.li null, "#{numFmt(@props.stats.marketSellOrdersPlaced)} sell orders placed"
+        dom.li null, "#{numFmt(@props.stats.marketCreateContractsTotal)} contacts created"
+        dom.li null, "#{numFmt(@props.stats.marketAcceptContractsItemExchange)} item contracts accepted"
+        dom.li null, "#{numFmt(@props.stats.marketAcceptContractsCourier)} courier contracts accepted"
+        dom.li null, "#{numFmt(@props.stats.marketDeliverCourierContract)} courier contracts delivered"
+        dom.li null, "#{numFmt(@props.stats.marketModifyMarketOrder)} market orders modified"
+        dom.li null, "#{numFmt(@props.stats.marketCancelMarketOrder)} market orders cancelled"
 )
 
 ContactsPanel = React.createClass(
@@ -1172,7 +1226,7 @@ SocialMiscPanel = React.createClass(
   render: ->
     dom.div {className: ''},
       dom.ul null,
-        dom.li null, "#{Intl.NumberFormat().format(@props.stats.socialChatTotalMessageLength)} characters written in chat"
+        dom.li null, "#{numFmt(@props.stats.socialChatTotalMessageLength)} characters written in chat"
         dom.li null, "#{@props.stats.socialMailsSent} mails sent"
         dom.li null, "#{@props.stats.socialMailsReceived} mails received"
         dom.li null, "#{@props.stats.socialDirectTrades} direct trades made"
@@ -1202,6 +1256,7 @@ PieDataPanel = React.createClass(
   getDefaultProps: ->
     return {
       chartType: 'pie'
+      layout: 'horizontal'
     }
   deriveData: (sortFn) ->
     tmp = _.clone @props.data
@@ -1223,34 +1278,44 @@ PieDataPanel = React.createClass(
         chartElementType = ShipHPChart
         sortFn = (a, b) -> return HP_BAR_ORDER.indexOf(a.key) - HP_BAR_ORDER.indexOf(b.key)
     data = @deriveData(sortFn)
-    dom.div {className: 'row'},
-      dom.div {className: 'col-sm-4'},
-        React.createElement(chartElementType, {data: data})
-      dom.div {className: 'col-sm-6'},
-        React.createElement(PieDataTable,{data: data, total: @total})
+
+    chart = React.createElement(chartElementType, {data: data})
+    table = React.createElement(PieDataTable,{data: data, total: @total})
+
+    if @props.layout is 'horizontal'
+      return dom.div {className: 'row'},
+        dom.div {className: 'col-sm-4'}, chart
+        dom.div {className: 'col-sm-6'}, table
+    else
+      return dom.div null,
+        dom.div {className: 'row'}, chart
+        dom.div {className: 'row'}, table
 )
 
 PieDataTable = React.createClass(
   displayName: 'PieDataTable'
   render: ->
+    colors = d3.scale.category20()
     rows = _.map @props.data, (d) =>
-      if STYLES[d.key]?.iconId
-        iconCell = dom.td null,
-          dom.img {src: eveIconUrl(STYLES[d.key].iconId), width: 32, height: 32}, null
-      else if STYLES[d.key]?.icon
-        iconCell = dom.td null,
-          dom.img {src: STYLES[d.key].icon}, null
-      else
-        iconCell = dom.td null, null
+      color = STYLES[d.key].color ? colors(d.key)
+      iconCell = dom.td null,
+        dom.div {className: "circle", style: {backgroundColor: color}}, null
+      #if STYLES[d.key]?.iconId
+      #  iconCell = dom.td null,
+      #    dom.img {src: eveIconUrl(STYLES[d.key].iconId), width: 32, height: 32}, null
+      #else if STYLES[d.key]?.icon
+      #  iconCell = dom.td null,
+      #    dom.img {src: STYLES[d.key].icon}, null
+      #else
       return dom.tr {key: d.key},
         iconCell
         dom.td null, STYLES[d.key]?.label
-        dom.td null, Intl.NumberFormat().format(d.value)
-        dom.td null, d3.round(100*d.percentOfTotal,0)+'%'
+        dom.td {className: 'number'}, numFmt(d.value)
+        dom.td {className: 'number'}, d3.round(100*d.percentOfTotal,0)+'%'
     rows.push dom.tr {key: '_total_'},
       dom.td null, ''
       dom.td null, 'Total'
-      dom.td null, Intl.NumberFormat().format(@props.total)
+      dom.td {className: 'number'}, numFmt(@props.total)
       dom.td null, ''
     dom.table {className: 'table table-condensed'},
       dom.tbody null,
@@ -1263,7 +1328,7 @@ BarChart = React.createClass(
     return {
       max: null
       width: 300
-      height: 150
+      height: 140
       padding: 30
       margin:
         top: 20
@@ -1292,7 +1357,7 @@ BarChart = React.createClass(
 
     y = d3.scale.ordinal()
           .domain(_.map(@props.data, (d) -> d.key))
-          .rangeRoundBands [0, @props.height], .1
+          .rangeRoundBands [0, @props.height], .4
 
     yAxis = d3.svg.axis()
               .scale y
@@ -1328,7 +1393,7 @@ BarChart = React.createClass(
         .attr 'y', y.rangeBand() / 2
         .attr 'dy', '.35em'
         .attr 'fill', 'white'
-        .text (d) -> Intl.NumberFormat().format(d.value)
+        .text (d) -> numFmt(d.value)
 
 
   render: ->
@@ -1341,7 +1406,7 @@ PieChart = React.createClass(
     return {
       width: 150
       height: 150
-      innerRadius: 55
+      innerRadius: 60
     }
   componentDidMount: ->
     @renderChart()
@@ -1395,7 +1460,7 @@ ShipHPChart = React.createClass(
   getDefaultProps: ->
     return {
       width: 200
-      height: 200
+      height: 125
     }
   componentDidMount: ->
     @renderChart()
@@ -1527,8 +1592,8 @@ StatPanel = React.createClass(
   render: ->
     name = @props.name ? @props.stat
     value = switch @props.units
-      when 'percent' then Intl.NumberFormat().format(@props.value) + '%'
-      else Intl.NumberFormat().format(@props.value)
+      when 'percent' then numFmt(@props.value) + '%'
+      else numFmt(@props.value)
     dom.div {className: 'col-md-3'},
       dom.div {className: 'panel panel-default'},
         dom.div {className: 'panel-heading', title: @props.description}, name
