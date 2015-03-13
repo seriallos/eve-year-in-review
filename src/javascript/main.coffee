@@ -33,22 +33,27 @@ env = 'dev'
 CONFIG =
   dev:
     sso_host: 'https://sisilogin.testeveonline.com'
-    sso_client_id: '448241b523d24f0c947ea58a4443bb02'
     crest_host: 'https://api-sisi.testeveonline.com'
+    clients:
+      'localhost:3000':
+        sso_client_id: '448241b523d24f0c947ea58a4443bb02'
+        callback_url: 'http://localhost:3000'
+      'disda.in':
+        sso_client_id: 'be843963a3cf4ed3a5de411f1b4a84d4'
+        callback_url: 'http://disda.in/eve/yir/'
   live:
     sso_host: 'https://login.eveonline.com'
     sso_client_id: '67a0cc0f68d34e77b9751f8c75dd2e31'
     crest_host: 'https://crest-tq.eveonline.com'
 
-host = window.location.host
-proto = window.location.protocol
+# TODO: hash of client IDs and callback URLs, match to current domain
 
-console.log host, proto
+client = CONFIG[env].clients[window.location.host]
 
 SSO_PROTO = 'https'
-SSO_CALLBACK_URL = 'http://localhost:3000'
+SSO_CALLBACK_URL = client.callback_url
 SSO_HOST = CONFIG[env].sso_host
-SSO_CLIENT_ID = CONFIG[env].sso_client_id
+SSO_CLIENT_ID = client.sso_client_id
 CREST_HOST = CONFIG[env].crest_host
 
 React = require 'react'
@@ -320,9 +325,6 @@ StatsUI = React.createClass(
             console.log(status)
             console.error(error);
       })
-      # get the character URL from decode
-      jrequest CREST_HOST, (error, data, xhr) ->
-        # noop
       jrequest "#{CREST_HOST}/decode/", (error, data, xhr) =>
         console.log status
         if xhr.status == 401
@@ -331,11 +333,14 @@ StatsUI = React.createClass(
           console.log "href", data.character.href
           charUrlParsed = urlParse data.character.href
           [ foo, foo, characterId ] = charUrlParsed.path.split '/'
-          @setState {character: {id: characterId, name: characterId}}
+          @setState {character: {id: characterId, name: ''}}
           statsUrl = data.character.href + "statistics/year/2014/"
-          $.getJSON data.character.href, (data, status, xhr) =>
+          jrequest data.character.href, (err, data, xhr) =>
             #console.log data
-          $.getJSON statsUrl, (data, status, xhr) =>
+            char = @state.character
+            char.name = data.name
+            @setState {character: char}
+          jrequest statsUrl, (err, data, xhr) =>
             stats = new CharacterStats(data)
             @setState {stats: stats, year: 2014, ssoState: 'loaded'}
 
@@ -521,7 +526,6 @@ Title = React.createClass(
 CharacterInfoPanel = React.createClass(
   displayName: 'CharacterInfoPanel'
   render: ->
-    afkPercent = d3.round(100 * (@props.stats.characterMinutesAfk / @props.stats.characterMinutes) )
     dom.div {className: 'row'},
       dom.div {className: 'col-md-4'},
         React.createElement(CharacterAvatar, {id: @props.character.id})
@@ -530,12 +534,10 @@ CharacterInfoPanel = React.createClass(
           dom.li null, 'Prefers ' + STYLES[@props.facts?.preferredSec]?.label
           dom.li null, "Active on #{@props.stats.daysOfActivity} days"
           dom.li null, "Time online: #{humanizeMinutes @props.stats.characterMinutes}"
-          dom.li null, "AFK time: #{humanizeMinutes @props.stats.characterMinutesAfk} (#{afkPercent}%)"
           dom.li null, "Total logins: #{numFmt @props.stats.characterSessionsStarted}"
 
 
           # characterMinutes
-          # characterMinutesAfk
           # characterSessionsStarted
           # daysOfActivity
 )
