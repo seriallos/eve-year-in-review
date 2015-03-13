@@ -359,23 +359,12 @@ StatsUI = React.createClass(
 
   render: ->
     if @state.ssoState == 'login'
-      ssoLoginImage = 'https://images.contentful.com/idjq7aai9ylm/4PTzeiAshqiM8osU2giO0Y/5cc4cb60bac52422da2e45db87b6819c/EVE_SSO_Login_Buttons_Large_White.png?w=270&h=45'
-      ssoParams =
-        response_type: 'token'
-        redirect_uri: SSO_CALLBACK_URL
-        client_id: SSO_CLIENT_ID
-        #scope: 'publicData'
-        scope: 'publicData characterStatisticsRead'
-        state: 'testState'
-
-      ssoUrl = "#{SSO_HOST}/oauth/authorize/?#{qs.stringify ssoParams}"
-      return dom.a {href: ssoUrl}, dom.img {src: ssoLoginImage}
+      return React.createElement(SSOLoginButton)
     else if @state.ssoState == 'loading'
       return dom.div null, "Verifying SSO..."
+    else if not @state.stats
+      return dom.div null, "Loading Your Stats..."
     else
-
-      if not @state.stats
-        return dom.div null, "Loading Your Stats..."
 
       facts = new CharacterFacts(@state.stats).getFacts()
 
@@ -439,6 +428,8 @@ StatsUI = React.createClass(
       rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
 
       dom.div {className: 'container translucent'},
+
+        React.createElement(SSOLoginButton, {linkText: 'Switch Character/Account'})
 
         title
 
@@ -515,6 +506,27 @@ StatsUI = React.createClass(
         # Misc
 
         #rawStatsList
+)
+
+SSOLoginButton = React.createClass(
+  displayName: 'SSOLoginButton'
+  render: ->
+    ssoLoginImage = 'https://images.contentful.com/idjq7aai9ylm/4PTzeiAshqiM8osU2giO0Y/5cc4cb60bac52422da2e45db87b6819c/EVE_SSO_Login_Buttons_Large_White.png?w=270&h=45'
+    ssoParams =
+      response_type: 'token'
+      redirect_uri: SSO_CALLBACK_URL
+      client_id: SSO_CLIENT_ID
+      scope: 'publicData characterStatisticsRead'
+      state: 'testState'
+
+    ssoUrl = "#{SSO_HOST}/oauth/authorize/?#{qs.stringify ssoParams}"
+
+    if @props.linkText
+      content = @props.linkText
+    else
+      content = dom.img {src: ssoLoginImage}
+
+    return dom.a {href: ssoUrl}, content
 )
 
 Title = React.createClass(
@@ -1367,7 +1379,9 @@ BarChart = React.createClass(
               .tickFormat (d) ->
                 STYLES[d].label
 
-    svg = d3.select(el).append('svg')
+    svg = d3.select(el).selectAll('svg').data [@props.data]
+
+    svg.enter().append('svg')
               .attr 'width', @props.width + @props.margin.left + @props.margin.right
               .attr 'height', @props.height + @props.margin.top + @props.margin.top
             .append 'g'
@@ -1433,7 +1447,9 @@ PieChart = React.createClass(
 
     data = pie(@props.data)
 
-    svg = d3.select(el).append('svg')
+    svg = d3.select(el).selectAll('svg').data [data]
+
+    svg.enter().append('svg')
             .attr 'width', @props.width
             .attr 'height', @props.height
 
@@ -1472,6 +1488,8 @@ ShipHPChart = React.createClass(
     if @props.data.length == 0
       return
 
+    console.log 'ship hp chart'
+
     el = @getDOMNode()
 
     radius = 90
@@ -1494,7 +1512,9 @@ ShipHPChart = React.createClass(
 
     data = @props.data
 
-    svg = d3.select(el).append('svg')
+    svg = d3.select(el).selectAll('svg').data [data]
+
+    svg.enter().append('svg')
             .attr 'width', @props.width
             .attr 'height', @props.height
 
