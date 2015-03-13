@@ -854,6 +854,7 @@ DamageAnalogyPanel = React.createClass(
       dom.h4 {className: 'pull-right'},
         dom.em null,"You have dealt enough damage to kill #{numShips} "
           dom.a {href: ship.fit}, ship.pluralName
+      dom.div {className: 'clearfix'}, ''
       dom.div {className: 'row'}, stamps
 
 )
@@ -1186,8 +1187,8 @@ ISKPanel = React.createClass(
       dom.ul null,
         dom.li null, "#{numFmt(@props.stats.iskIn)} ISK earned total"
         dom.li null, "#{numFmt(@props.stats.iskOut)} ISK spent total"
-        dom.li null, "#{numFmt(@props.stats.marketISKGained)} ISK earned from the market"
-        dom.li null, "#{numFmt(@props.stats.marketISKSpent)} ISK spent on the market"
+        dom.li null, "#{numFmt(@props.stats.marketIskIn)} ISK earned from the market"
+        dom.li null, "#{numFmt(@props.stats.marketIskOut)} ISK spent on the market"
 )
 
 MarketPanel = React.createClass(
