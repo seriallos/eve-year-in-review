@@ -823,6 +823,16 @@ DamageTakenPanel = React.createClass(
 DamageAnalogyPanel = React.createClass(
   displayName: 'DamageAnalogyPanel'
   ships:
+    venture:
+      pluralName: 'Ventures'
+      id: 32880
+      ehp: 3770
+      fit: 'https://o.smium.org/loadout/private/24585/6674104450400911360'
+    caracal:
+      pluralName: 'Caracals'
+      id: 621
+      ehp: 18000
+      fit: 'https://o.smium.org/loadout/private/24584/5861380819909607424'
     proteus:
       pluralName: 'Proteii'
       id: 29988
