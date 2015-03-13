@@ -32,6 +32,7 @@ class CharacterStats
   calcDerived: ->
     # fix a few stats
     @iskOut = -(@iskOut)
+    @marketIskOut = -(@marketIskOut)
     # derive some stats
     @averageSessionLength = @characterMinutes / @characterSessionsStarted
 
