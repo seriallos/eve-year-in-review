@@ -1,3 +1,15 @@
+body {
+  background: url(http://i.imgur.com/pwbe9.jpg) top left no-repeat;
+  background-attachment: fixed;
+  margin: 0;
+  padding: 0;
+}
+
+.translucent {
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 40px;
+}
+
 .axis text {
   fill: white;
 }
@@ -5,4 +17,30 @@
   fill: none;
   stroke: white;
   stroke-width: 1;
+}
+div.circle {
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+}
+div.circle.high {
+  background-color: #579c48
+}
+.circle.low {
+  background-color: #c0ad23
+}
+.circle.null {
+  background-color: #8f1024
+}
+.circle.wormhole {
+  background-color: #476f99
+}
+
+.number {
+  text-align: right;
+}
+
+.numCallout {
+  font-size: 200%;
+  font-weight: bold;
 }
