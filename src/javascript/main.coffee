@@ -345,11 +345,7 @@ StatsUI = React.createClass(
   loadSampleData: ->
     host = window.location.host
     proto = window.location.protocol
-    opts =
-      url: "#{proto}//#{host}/bella.json"
-      method: 'GET'
-      json: true
-    request opts, (err, res, data) =>
+    jrequest './bella.json', (err, data, xhr) =>
       stats = new CharacterStats(data)
       @setState {
         sample: true
@@ -367,7 +363,7 @@ StatsUI = React.createClass(
       return dom.div {className: 'vert-center'},
         dom.h2 null, 'EVE: Year in Review'
         dom.div null, React.createElement(SSOLoginButton)
-        dom.div null, "Don't play EVE?  ", dom.a({onClick: @loadSampleData}, 'Take a look at my stats.')
+        dom.div null, "Don't have an EVE account?  ", dom.a({onClick: @loadSampleData}, 'Take a look at my stats.')
     else if @state.ssoState == 'loading'
       return dom.div {className: 'vert-center'}, "Verifying SSO..."
     else if not @state.stats
@@ -545,20 +541,15 @@ Title = React.createClass(
 CharacterInfoPanel = React.createClass(
   displayName: 'CharacterInfoPanel'
   render: ->
+    avgSession = humanizeMinutes(Math.round(@props.stats.characterMinutes / @props.stats.characterSessionsStarted))
     dom.div {className: 'row'},
       dom.div {className: 'col-md-4'},
         React.createElement(CharacterAvatar, {id: @props.character.id})
       dom.div {className: 'col-md-8'},
-        dom.ul null,
-          dom.li null, 'Prefers ' + STYLES[@props.facts?.preferredSec]?.label
-          dom.li null, "Active on #{@props.stats.daysOfActivity} days"
-          dom.li null, "Time online: #{humanizeMinutes @props.stats.characterMinutes}"
-          dom.li null, "Total logins: #{numFmt @props.stats.characterSessionsStarted}"
-
-
-          # characterMinutes
-          # characterSessionsStarted
-          # daysOfActivity
+        React.createElement CalloutStat, {value: humanizeMinutes(@props.stats.characterMinutes), description: 'Time Played'}
+        React.createElement CalloutStat, {value: numFmt(@props.stats.daysOfActivity), description: 'Active Days'}
+        React.createElement CalloutStat, {value: numFmt(@props.stats.characterSessionsStarted), description: 'Logins'}
+        React.createElement CalloutStat, {value: avgSession, description: 'Avereage Session Length'}
 )
 
 CharacterAvatar = React.createClass(
@@ -571,6 +562,14 @@ CharacterAvatar = React.createClass(
   render: ->
     url = "https://image.eveonline.com/Character/#{@props.id}_#{@props.width}.jpg"
     dom.img {src: url, width: @props.width, height: @props.width, style: {boxShadow: '0 0 30px black'}}
+)
+
+CalloutStat = React.createClass(
+  displayName: 'CalloutStat'
+  render: ->
+    dom.div {className: 'callout'},
+      dom.div {className: 'value'}, @props.value
+      dom.div {className: 'description'}, @props.description
 )
 
 TravelJumpsPanel = React.createClass(
@@ -1259,6 +1258,7 @@ SocialMiscPanel = React.createClass(
   displayName: 'SocialMiscPanel'
   render: ->
     dom.div {className: ''},
+      dom.h3 null, 'Social / Fleets'
       dom.ul null,
         dom.li null, "#{numFmt(@props.stats.socialChatTotalMessageLength)} characters written in chat"
         dom.li null, "#{numFmt @props.stats.socialMailsSent} mails sent"
@@ -1272,6 +1272,7 @@ MiscStats = React.createClass(
   displayName: 'MiscStats'
   render: ->
     dom.div {className: ''},
+      dom.h3 null, 'The Rest!'
       dom.ul null,
         dom.li null, "#{numFmt @props.stats.genericConeScans} Directional Scans"
         dom.li null, "#{numFmt @props.stats.genericRequestScans} Probe Scans"
@@ -1313,7 +1314,7 @@ PieDataPanel = React.createClass(
         sortFn = (a, b) -> return HP_BAR_ORDER.indexOf(a.key) - HP_BAR_ORDER.indexOf(b.key)
     data = @deriveData(sortFn)
 
-    chart = React.createElement(chartElementType, {data: data})
+    chart = React.createElement(chartElementType, {data: data, total: @total})
     table = React.createElement(PieDataTable,{data: data, total: @total})
 
     if @props.layout is 'horizontal'
@@ -1449,7 +1450,7 @@ PieChart = React.createClass(
   componentDidUpdate: ->
     @renderChart()
   renderChart: ->
-    if @props.data.length == 0
+    if @props.total == 0
       return
 
     el = @getDOMNode()

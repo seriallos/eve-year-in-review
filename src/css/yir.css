@@ -1,4 +1,4 @@
-body {
+#body {
   background: url(http://i.imgur.com/pwbe9.jpg) top left no-repeat;
   background-attachment: fixed;
   margin: 0;
@@ -31,24 +31,17 @@ div.circle {
   width: 20px;
   height: 20px;
 }
-div.circle.high {
-  background-color: #579c48
-}
-.circle.low {
-  background-color: #c0ad23
-}
-.circle.null {
-  background-color: #8f1024
-}
-.circle.wormhole {
-  background-color: #476f99
-}
 
 .number {
   text-align: right;
 }
 
-.numCallout {
-  font-size: 200%;
+.callout > .value {
+  text-align: center;
+  font-size: 300%;
   font-weight: bold;
+}
+
+.callout > .description {
+  text-align: center;
 }
