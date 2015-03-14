@@ -51,9 +51,9 @@ CONFIG =
 client = CONFIG[env].clients[window.location.host]
 
 SSO_PROTO = 'https'
-SSO_CALLBACK_URL = client.callback_url
+SSO_CALLBACK_URL = client?.callback_url
 SSO_HOST = CONFIG[env].sso_host
-SSO_CLIENT_ID = client.sso_client_id
+SSO_CLIENT_ID = client?.sso_client_id
 CREST_HOST = CONFIG[env].crest_host
 
 React = require 'react'
@@ -71,18 +71,6 @@ CharacterStats = require './character_stats'
 CharacterFacts = require './character_facts'
 
 dom = React.DOM
-
-samples = [
-  'dscan'
-  'explorer'
-  'industry'
-  'lowsec'
-  'null_pvp'
-  'market'
-  'miner'
-  'missions'
-]
-
 
 # sources of sampled colors
 #   * subcap weapons: http://i.imgur.com/c08RJ.jpg
@@ -274,6 +262,22 @@ STYLES =
     color: '#7C0000'
     icon: 'images/standingsTerrible.png'
 
+  iskIn:
+    label: 'Earned'
+    color: '#579C48'
+  iskOut:
+    label: 'Spent'
+    color: '#8F1024'
+
+  jobCopy:
+    icon: 'images/icons/UI/Industry/copying.png'
+  jobMe:
+    icon: 'images/icons/UI/Industry/researchMaterial.png'
+  jobTe:
+    icon: 'images/icons/UI/Industry/researchTime.png'
+  jobInvention:
+    icon: 'images/icons/UI/Industry/invention.png'
+
 # alias styles
 STYLES.HighSec = STYLES.high
 STYLES.LowSec = STYLES.low
@@ -298,6 +302,15 @@ jrequest = (url, done) ->
   })
   $.getJSON url, (data, status, xhr) ->
     done(null, data, xhr)
+
+humanizeLargeNum = (value) ->
+  suffixes = [ '', 'K', 'M', 'B', 'T' ]
+  suffix = 0
+  while value > 999
+    value = value / 1000
+    suffix++
+  return d3.round(value,2) + suffixes[suffix]
+
 
 humanizeMinutes = (minutes) ->
   hours = Math.floor(minutes / 60)
@@ -370,13 +383,17 @@ StatsUI = React.createClass(
   loadStatsYear: (year) ->
     url = "#{@state.character.url}statistics/year/#{year}/"
     jrequest url, (err, data, xhr) =>
-      stats = new CharacterStats(data)
-      @setState {stats: stats, year: year, ssoState: 'loaded'}
+      if err and xhr.status == 404
+        @setState {stats: null, year: year, ssoState: 'loaded', noData: true}
+      else
+        stats = new CharacterStats(data)
+        @setState {stats: stats, year: year, ssoState: 'loaded', noData: false}
 
   loadSampleData: ->
     host = window.location.host
     proto = window.location.protocol
-    jrequest './bella.json', (err, data, xhr) =>
+    sample = './bella.json'
+    jrequest sample, (err, data, xhr) =>
       stats = new CharacterStats(data)
       @setState {
         sample: true
@@ -402,13 +419,27 @@ StatsUI = React.createClass(
           dom.div {className: 'broughtToYou'}, "Brought to you by Bellatroix (", dom.a({href:'https://twitter.com/sollaires'}, '@sollaires'), "), designed by ", dom.a({href:'https://twitter.com/baletsa'}, '@baletsa')
     else if @state.ssoState == 'loading'
       return dom.div {className: 'vert-center'}, "Verifying SSO token and loading your stats..."
-    else if not @state.stats
+    else if not @state.stats and not @state.noData
       return dom.div {className: 'vert-center'}, "Loading Your Stats..."
     else
 
-      facts = new CharacterFacts(@state.stats).getFacts()
+      if @state.stats
+        facts = new CharacterFacts(@state.stats).getFacts()
+      else
+        facts = null
 
       title = React.createElement(Title, {character: @state.character, year: @state.year, switchToYear: @loadStatsYear, hideSwitch: @state.sample})
+
+      if @state.noData
+        return dom.div {className: 'container translucent'},
+
+          React.createElement(SSOLoginButton, {linkText: 'Switch Character/Account'})
+
+          title
+
+          charInfoPanel
+
+          dom.div null, "No data for #{@state.year}"
 
       charInfoPanel = React.createElement(CharacterInfoPanel, {character: @state.character, facts: facts, stats: @state.stats})
 
@@ -455,7 +486,16 @@ StatsUI = React.createClass(
 
       miningPanel = React.createElement(MiningPanel, {stats: @state.stats})
 
-      iskPanel = React.createElement(ISKPanel, {stats: @state.stats})
+      max = _.max [
+        @state.stats?.iskIn
+        @state.stats?.iskOut
+        @state.stats?.marketIskIn
+        @state.stats?.marketIskOut
+      ]
+
+      totalIskPanel = React.createElement(TotalISKPanel, {stats: @state.stats, max: max})
+      marketIskPanel = React.createElement(MarketISKPanel, {stats: @state.stats, max: max})
+
       marketPanel = React.createElement(MarketPanel, {stats: @state.stats})
 
       contactsSelfPanel = React.createElement(ContactsPanel, {context: 'self', stats: @state.stats})
@@ -513,14 +553,19 @@ StatsUI = React.createClass(
 
         # PVE Stats
 
-        miscModules
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, miscModules
 
-        pveStats
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, pveStats
 
         # ISK / Markets
         dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, iskPanel
-          dom.div {className: 'col-md-6'}, marketPanel
+          dom.div {className: 'col-md-6'}, totalIskPanel
+          dom.div {className: 'col-md-6'}, marketIskPanel
+
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, marketPanel
 
         # Industry
         dom.div {className: 'row'},
@@ -529,7 +574,7 @@ StatsUI = React.createClass(
 
         # Mining
         dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, blueprints
+          dom.div {className: 'col-md-12'}, blueprints
 
 
         # Social
@@ -572,6 +617,7 @@ Title = React.createClass(
   switchYear: ->
     return if @props.year == 2014 then 2013 else 2014
   onClick: ->
+    console.log "Switching to", @switchYear()
     this.props.switchToYear(@switchYear())
   render: ->
     dom.h2 null,
@@ -590,7 +636,7 @@ CharacterInfoPanel = React.createClass(
         React.createElement CalloutStat, {value: @props.stats.characterMinutes, description: 'Time Played', formatter: humanizeMinutes}
         React.createElement CalloutStat, {value: @props.stats.daysOfActivity, description: 'Active Days'}
         React.createElement CalloutStat, {value: @props.stats.characterSessionsStarted, description: 'Logins'}
-        React.createElement CalloutStat, {value: avgSession, description: 'Avereage Session Length', formatter: humanizeMinutes}
+        React.createElement CalloutStat, {value: avgSession, description: 'Average Session Length', formatter: humanizeMinutes}
 )
 
 CharacterAvatar = React.createClass(
@@ -758,7 +804,7 @@ KillsPanel = React.createClass(
         ' '
         dom.small null, 'Player Ships'
       React.createElement(BarChart, {data: @chartData(), max: @props.max})
-      dom.div null, "Popped #{@props.stats?.combatKillsPodTotal} pods, assisted on #{@props.stats?.combatKillsAssists} killmails"
+      dom.div null, "Popped #{numFmt @props.stats?.combatKillsPodTotal} pods, assisted on #{numFmt @props.stats?.combatKillsAssists} killmails"
 )
 
 DeathsPanel = React.createClass(
@@ -787,7 +833,7 @@ DeathsPanel = React.createClass(
       dom.h3 null,
         'Losses'
         ' '
-        dom.small null, 'PVP'
+        dom.small null, 'Ships Lost in PVP'
       React.createElement(BarChart, {data: @chartData(), max: @props.max})
       dom.div null, "Podded #{@props.stats?.combatDeathsPodTotal} times"
 )
@@ -937,12 +983,12 @@ CalloutPanel = React.createClass(
   render: ->
     if @props.callouts
       calloutElements = @props.callouts.map (callout) ->
-        return React.createElement(CalloutStat, callout)
+        return React.createElement(CalloutStat, _.merge(callout, {key: callout.description}))
       itemsPerCol = Math.ceil(calloutElements.length / @props.columns)
       columns = []
       colSize = 12 / @props.columns
       for i in [0...@props.columns]
-        col = dom.div {className: "col-md-#{colSize}"}, _.take(calloutElements, itemsPerCol)
+        col = dom.div {className: "col-md-#{colSize}", key: i}, _.take(calloutElements, itemsPerCol)
         calloutElements.splice(0, itemsPerCol)
         columns.push col
       dom.div null,
@@ -1267,29 +1313,32 @@ IndustryJobsPanel = React.createClass(
 IndustryBlueprintPanel = React.createClass(
   displayName: 'IndustryBlueprintPanel'
   render: ->
-    dom.div null,
-      dom.h3 null, "Blueprints"
-      dom.ul null,
-        dom.li null,
-          dom.img {src: 'images/icons/UI/Industry/copying.png'}
-          ' '
-          "Copied #{@props.stats.industryRamJobsCompletedCopyBlueprint} blueprints"
-        dom.li null,
-          dom.img {src: 'images/icons/UI/Industry/researchMaterial.png'}
-          ' '
-          "#{@props.stats.industryRamJobsCompletedMaterialProductivity} ME jobs"
-        dom.li null, 
-          dom.img {src: 'images/icons/UI/Industry/researchTime.png'}
-          ' '
-          "#{@props.stats.industryRamJobsCompletedTimeProductivity} TE jobs"
-        dom.li null,
-          dom.img {src: 'images/icons/UI/Industry/invention.png'}
-          ' '
-          "#{@props.stats.industryRamJobsCompletedInvention} invention jobs"
-        dom.li null,
-          dom.img {src: 'images/icons/UI/Industry/manufacturing.png'}
-          ' '
-          "#{@props.stats.industryRamJobsCompletedReverseEngineering} reverse engineering jobs"
+    if @props.stats
+      callouts = [
+        {
+          value: @props.stats.industryRamJobsCompletedCopyBlueprint
+          description: 'Blueprints Copied'
+          icon: 'jobCopy'
+        }
+        {
+          value: @props.stats.industryRamJobsCompletedMaterialProductivity
+          description: 'ME Jobs'
+          icon: 'jobMe'
+        }
+        {
+          value: @props.stats.industryRamJobsCompletedTimeProductivity
+          description: 'TE Jobs'
+          icon: 'jobTe'
+        }
+        {
+          value: @props.stats.industryRamJobsCompletedInvention
+          description: 'Invention Jobs'
+          icon: 'jobInvention'
+        }
+      ]
+      return React.createElement(CalloutPanel, {title: 'Blueprints', callouts: callouts, columns: 4})
+    else
+      return null
 )
 
 MiningPanel = React.createClass(
@@ -1376,32 +1425,114 @@ MiningPanel = React.createClass(
       React.createElement(PieDataPanel,{data: @chartData()})
 )
 
-ISKPanel = React.createClass(
-  displayName: 'ISKPanel'
+TotalISKPanel = React.createClass(
+  displayName: 'TotalISKPanel'
+  chartData: ->
+    return [
+      {
+        key: 'iskIn'
+        value: @props.stats?.iskIn
+      }
+      {
+        key: 'iskOut'
+        value: @props.stats?.iskOut
+      }
+    ]
   render: ->
-    dom.div null,
-      dom.h3 null, 'ISK'
-      dom.ul null,
-        dom.li null, "#{numFmt(@props.stats.iskIn)} ISK earned total"
-        dom.li null, "#{numFmt(@props.stats.iskOut)} ISK spent total"
-        dom.li null, "#{numFmt(@props.stats.marketIskIn)} ISK earned from the market"
-        dom.li null, "#{numFmt(@props.stats.marketIskOut)} ISK spent on the market"
+    margin =
+      top: 20
+      right: 100
+      bottom: 20
+      left: 100
+    hoursPlayed = @props.stats?.characterMinutes / 60
+    iskPerHour = Math.round(@props.stats?.iskIn / hoursPlayed)
+    iskSpentPerHour = Math.round(@props.stats?.iskOut / hoursPlayed)
+    return dom.div null,
+      dom.h3 null,
+        'ISK'
+        ' '
+        dom.small null, 'All Sources'
+      React.createElement(BarChart, {data: @chartData(), margin: margin, max: @props.max, formatter: humanizeLargeNum})
+      dom.div null, "Average ISK/hour earned: #{humanizeLargeNum iskPerHour}"
+      dom.div null, "Average ISK/hour spent: #{humanizeLargeNum iskSpentPerHour}"
+)
+
+MarketISKPanel = React.createClass(
+  displayName: 'MarketISKPanel'
+  chartData: ->
+    return [
+      {
+        key: 'iskIn'
+        value: @props.stats?.marketIskIn
+      }
+      {
+        key: 'iskOut'
+        value: @props.stats?.marketIskOut
+      }
+    ]
+  render: ->
+    margin =
+      top: 20
+      right: 100
+      bottom: 20
+      left: 100
+    return dom.div null,
+      dom.h3 null,
+        'ISK'
+        ' '
+        dom.small null, 'Market Only'
+      React.createElement(BarChart, {data: @chartData(), margin: margin, max: @props.max, formatter: humanizeLargeNum})
 )
 
 MarketPanel = React.createClass(
   displayName: 'MarketPanel'
   render: ->
-    dom.div null,
-      dom.h3 null, 'Markets and Contracts'
-      dom.ul null,
-        dom.li null, "#{numFmt(@props.stats.marketBuyOrdersPlaced)} buy orders placed"
-        dom.li null, "#{numFmt(@props.stats.marketSellOrdersPlaced)} sell orders placed"
-        dom.li null, "#{numFmt(@props.stats.marketCreateContractsTotal)} contacts created"
-        dom.li null, "#{numFmt(@props.stats.marketAcceptContractsItemExchange)} item contracts accepted"
-        dom.li null, "#{numFmt(@props.stats.marketAcceptContractsCourier)} courier contracts accepted"
-        dom.li null, "#{numFmt(@props.stats.marketDeliverCourierContract)} courier contracts delivered"
-        dom.li null, "#{numFmt(@props.stats.marketModifyMarketOrder)} market orders modified"
-        dom.li null, "#{numFmt(@props.stats.marketCancelMarketOrder)} market orders cancelled"
+    if @props.stats
+      callouts = [
+        {
+          value: @props.stats.marketBuyOrdersPlaced
+          description: 'Buy Orders'
+          iconId: styleIconId 'buyOrders'
+        }
+        {
+          value: @props.stats.marketSellOrdersPlaced
+          description: 'Sell Orders'
+          iconId: styleIconId 'sellOrders'
+        }
+        {
+          value: @props.stats.marketModifyMarketOrder
+          description: 'Orders Modified'
+          iconId: styleIconId 'ordersModified'
+        }
+        {
+          value: @props.stats.marketCancelMarketOrder
+          description: 'Orders Cancelled'
+          iconId: styleIconId 'ordersCancelled'
+        }
+        {
+          value: @props.stats.marketCreateContractsTotal
+          description: 'Contracts Created'
+          iconId: styleIconId 'contractCreate'
+        }
+        {
+          value: @props.stats.marketAcceptContractsItemExchange
+          description: 'Item Contracts Accepted'
+          iconId: styleIconId 'contractAccept'
+        }
+        {
+          value: @props.stats.marketAcceptContractsCourier
+          description: 'Courier Contracts Accepted'
+          iconId: styleIconId 'courierAccept'
+        }
+        {
+          value: @props.stats.marketDeliverCourierContract
+          description: 'Courier Contracts Delivered'
+          iconId: styleIconId 'courierDeliver'
+        }
+      ]
+      return React.createElement(CalloutPanel, {title: 'Market and Contracts', callouts: callouts, columns: 4})
+    else
+      return null
 )
 
 ContactsPanel = React.createClass(
@@ -1500,16 +1631,18 @@ PieDataPanel = React.createClass(
       when 'pie'
         chartElementType = PieChart
         sortFn = (a, b) -> return b.value - a.value
+        showColor = true
       when 'shipHp'
         chartElementType = ShipHPChart
         sortFn = (a, b) -> return HP_BAR_ORDER.indexOf(a.key) - HP_BAR_ORDER.indexOf(b.key)
+        showColor = false
     data = @deriveData(sortFn)
 
     if @total == 0
       return dom.div null, "No activity this year"
 
     chart = React.createElement(chartElementType, {data: data, total: @total})
-    table = React.createElement(PieDataTable,{data: data, total: @total, showZero: @props.showZero})
+    table = React.createElement(PieDataTable,{data: data, total: @total, showZero: @props.showZero, showColor: showColor})
 
     if @props.layout is 'horizontal'
       return dom.div {className: 'row'},
@@ -1526,6 +1659,7 @@ PieDataTable = React.createClass(
   getDefaultProps: ->
     return {
       showZero: false
+      showColor: true
     }
   render: ->
     colors = d3.scale.category20()
@@ -1533,8 +1667,11 @@ PieDataTable = React.createClass(
       if d.value == 0 and not @props.showZero
         return null
       color = STYLES[d.key].color ? colors(d.key)
-      iconCell = dom.td null,
-        dom.div {className: "circle", style: {backgroundColor: color}}, null
+      if @props.showColor
+        iconCell = dom.td null,
+          dom.div {className: "circle", style: {backgroundColor: color}}, null
+      else
+        iconCell = null
       #if STYLES[d.key]?.iconId
       #  iconCell = dom.td null,
       #    dom.img {src: eveIconUrl(STYLES[d.key].iconId), width: 32, height: 32}, null
@@ -1548,7 +1685,7 @@ PieDataTable = React.createClass(
         dom.td {className: 'number'}, numFmt(d.value)
         dom.td {className: 'number'}, d3.round(100*d.percentOfTotal,0)+'%'
     rows.push dom.tr {key: '_total_'},
-      dom.td null, ''
+      if @props.showColor then dom.td(null, '') else null
       dom.td null, 'Total'
       dom.td {className: 'number'}, numFmt(@props.total)
       dom.td null, ''
@@ -1562,6 +1699,7 @@ BarChart = React.createClass(
   getDefaultProps: ->
     return {
       max: null
+      formatter: numFmt
       width: 300
       height: 140
       padding: 30
@@ -1600,9 +1738,7 @@ BarChart = React.createClass(
               .tickFormat (d) ->
                 STYLES[d].label
 
-    svg = d3.select(el).selectAll('svg').data [@props.data]
-
-    svg.enter().append('svg')
+    svg = d3.select(el).append('svg')
               .attr 'width', @props.width + @props.margin.left + @props.margin.right
               .attr 'height', @props.height + @props.margin.top + @props.margin.top
             .append 'g'
@@ -1630,7 +1766,7 @@ BarChart = React.createClass(
         .attr 'y', y.rangeBand() / 2
         .attr 'dy', '.35em'
         .attr 'fill', 'white'
-        .text (d) -> numFmt(d.value)
+        .text (d) => @props.formatter(d.value)
 
 
   render: ->
@@ -1757,7 +1893,7 @@ ShipHPChart = React.createClass(
         .attr 'fill', (d) -> STYLES[d.key]?.color
         .attr 'd', arc
   render: ->
-    dom.div null, ''
+    dom.div {className: 'chart'}, ''
 )
 
 RawStatsList = React.createClass(
