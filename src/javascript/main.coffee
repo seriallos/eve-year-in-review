@@ -56,7 +56,6 @@ SSO_HOST = CONFIG[env].sso_host
 SSO_CLIENT_ID = client.sso_client_id
 CREST_HOST = CONFIG[env].crest_host
 
-
 React = require 'react'
 $ = require 'jquery'
 d3 = require 'd3'
@@ -388,7 +387,7 @@ StatsUI = React.createClass(
       travelJumpsPanel = React.createElement(TravelJumpsPanel, {stats: @state.stats})
       travelDistancePanel = React.createElement(TravelDistancePanel, {stats: @state.stats})
 
-      distanceAnalogy = React.createElement(DistanceAnalogyPanel, {distance: @state.stats?.total 'travelDistanceWarped'})
+      distanceAnalogy = React.createElement(DistanceAnalogyPanel, {distance: @state.stats?.total('travelDistanceWarped')})
 
       max = _.max [
         @state.stats?.combatKillsHighSec
@@ -639,7 +638,7 @@ TravelDistancePanel = React.createClass(
     return data
   render: ->
     dom.div {className: ''},
-      dom.h3 null, 'Warp Distance Traveled (AU)'
+      dom.h3 null, 'Warp Distance Traveled ', dom.small(null,'AU')
       React.createElement(PieDataPanel,{data: @chartData(), chartType: 'pie'})
 )
 
@@ -672,17 +671,14 @@ DistanceAnalogyPanel = React.createClass(
       name: 'The International Space Station orbiting the Earth'
       speed: 7700
 
-  getInitialState: ->
-    return {
-      vehicle: _.sample @vehicles
-    }
   render: ->
-    speedKmPerS = @state.vehicle.speed / 1000
+    vehicle = _.sample @vehicles
+    speedKmPerS = vehicle.speed / 1000
     speedOfLightAu = speedKmPerS / 149597871
     totalAu = @props.distance
     travelSeconds = totalAu / speedOfLightAu
     lightSpeedYears = numFmt(d3.round(travelSeconds / 60 / 60 / 24/ 365, 1))
-    distanceText = "#{@state.vehicle.name} would take #{lightSpeedYears} years to cover your total distance travelled."
+    distanceText = "#{vehicle.name} would take #{lightSpeedYears} years to cover your total distance travelled."
     dom.h4 {className: 'pull-right'}, dom.em(null,distanceText)
 )
 
@@ -712,9 +708,9 @@ KillsPanel = React.createClass(
       dom.h3 null,
         'Killing Blows'
         ' '
-        dom.small null, 'PVP'
+        dom.small null, 'Player Ships'
       React.createElement(BarChart, {data: @chartData(), max: @props.max})
-      dom.div null, "Assisted on #{@props.stats?.combatKillsAssists} additional killmails"
+      dom.div null, "Popped #{@props.stats?.combatKillsPodTotal} pods, assisted on #{@props.stats?.combatKillsAssists} killmails"
 )
 
 DeathsPanel = React.createClass(
@@ -741,10 +737,11 @@ DeathsPanel = React.createClass(
   render: ->
     dom.div null,
       dom.h3 null,
-        'Deaths'
+        'Losses'
         ' '
         dom.small null, 'PVP'
       React.createElement(BarChart, {data: @chartData(), max: @props.max})
+      dom.div null, "Podded #{@props.stats?.combatDeathsPodTotal} times"
 )
 
 WeaponUsagePanel = React.createClass(
@@ -1391,9 +1388,9 @@ BarChart = React.createClass(
   componentDidUpdate: ->
     @renderChart()
   renderChart: ->
-    if @props.data.length == 0
-      return
     el = @getDOMNode()
+
+    d3.select(el).selectAll('svg').remove()
 
     if not @props.max
       max = _.max @props.data, (d) -> d.value
@@ -1465,10 +1462,13 @@ PieChart = React.createClass(
   componentDidUpdate: ->
     @renderChart()
   renderChart: ->
-    if @props.total == 0
-      return
 
     el = @getDOMNode()
+
+    d3.select(el).selectAll('svg').remove()
+
+    if @props.total == 0
+      return
 
     color = d3.scale.category20()
 
@@ -1521,10 +1521,13 @@ ShipHPChart = React.createClass(
   componentDidUpdate: ->
     @renderChart()
   renderChart: ->
-    if @props.data.length == 0
-      return
 
     el = @getDOMNode()
+
+    d3.select(el).selectAll('svg').remove()
+
+    if @props.data.length == 0
+      return
 
     radius = 90
     arcWidth = 7

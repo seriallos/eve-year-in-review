@@ -18,16 +18,14 @@ class CharacterStats
   #getByPrefix: (prefix) ->
   #  return _.map @, (key, val) -> {key: key, val: val}
 
-  total: _.memoize (prefix) ->
+  total: (prefix) ->
     statNames = _.map @secSuffixes, (suffix) -> prefix + suffix
     return _.reduce statNames, ((sum, stat) => sum + @[stat]), 0
 
-  percent: _.memoize (prefix, suffix) ->
+  percent: (prefix, suffix) ->
     total = @total prefix
     pct = @[prefix + suffix] / total
     return pct
-  # resolver
-  , (prefix, suffix) -> return "#{prefix}#{suffix}"
 
   calcDerived: ->
     # fix a few stats
