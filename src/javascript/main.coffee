@@ -286,7 +286,7 @@ styleIconUrl = (key, width = 32) ->
   return eveIconUrl(STYLES[key].iconId, width)
 
 styleIconId = (key) ->
-  return STYLES[key].iconId
+  return STYLES[key]?.iconId
 
 eveIconUrl = (id, width = 32) ->
   return "https://image.eveonline.com/Type/#{id}_#{width}.png"
@@ -448,9 +448,7 @@ StatsUI = React.createClass(
 
       pveStats = React.createElement(PvePanel, {stats: @state.stats})
 
-      miscModules1 = React.createElement(MiscModuleOnePanel, {stats: @state.stats})
-      miscModules2 = React.createElement(MiscModuleTwoPanel, {stats: @state.stats})
-      miscModules3 = React.createElement(MiscModuleThreePanel, {stats: @state.stats})
+      miscModules = React.createElement(MiscModulePanel, {stats: @state.stats})
 
       industryJobs = React.createElement(IndustryJobsPanel, {stats: @state.stats})
       blueprints = React.createElement(IndustryBlueprintPanel, {stats: @state.stats})
@@ -515,13 +513,9 @@ StatsUI = React.createClass(
 
         # PVE Stats
 
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-4'}, miscModules1
-          dom.div {className: 'col-md-4'}, miscModules3
-          dom.div {className: 'col-md-4'}, miscModules2
+        miscModules
 
-        dom.div {className: 'row'}
-          dom.div {className: 'col-md-6'}, pveStats
+        pveStats
 
         # ISK / Markets
         dom.div {className: 'row'},
@@ -593,10 +587,10 @@ CharacterInfoPanel = React.createClass(
       dom.div {className: 'col-md-4'},
         React.createElement(CharacterAvatar, {id: @props.character.id})
       dom.div {className: 'col-md-8'},
-        React.createElement CalloutStat, {value: humanizeMinutes(@props.stats.characterMinutes), description: 'Time Played'}
-        React.createElement CalloutStat, {value: numFmt(@props.stats.daysOfActivity), description: 'Active Days'}
-        React.createElement CalloutStat, {value: numFmt(@props.stats.characterSessionsStarted), description: 'Logins'}
-        React.createElement CalloutStat, {value: humanizeMinutes(avgSession), description: 'Avereage Session Length'}
+        React.createElement CalloutStat, {value: @props.stats.characterMinutes, description: 'Time Played', formatter: humanizeMinutes}
+        React.createElement CalloutStat, {value: @props.stats.daysOfActivity, description: 'Active Days'}
+        React.createElement CalloutStat, {value: @props.stats.characterSessionsStarted, description: 'Logins'}
+        React.createElement CalloutStat, {value: avgSession, description: 'Avereage Session Length', formatter: humanizeMinutes}
 )
 
 CharacterAvatar = React.createClass(
@@ -613,6 +607,10 @@ CharacterAvatar = React.createClass(
 
 CalloutStat = React.createClass(
   displayName: 'CalloutStat'
+  getDefaultProps: ->
+    return {
+      formatter: numFmt
+    }
   render: ->
     icon = null
     iconWrap = null
@@ -622,8 +620,14 @@ CalloutStat = React.createClass(
       icon = dom.img {src: STYLES[@props.icon].icon}
     if icon
       iconWrap = dom.span {className: 'iconWrap'}, icon
+
+    if @props.formatter
+      value = @props.formatter(@props.value)
+    else
+      value = @props.value
+
     dom.div {className: 'callout'},
-      dom.div {className: 'value'}, iconWrap, @props.value
+      dom.div {className: 'value'}, iconWrap, value
       dom.div {className: 'description'}, @props.description
 )
 
@@ -713,14 +717,17 @@ DistanceAnalogyPanel = React.createClass(
       speed: 7700
 
   render: ->
-    vehicle = _.sample @vehicles
-    speedKmPerS = vehicle.speed / 1000
-    speedOfLightAu = speedKmPerS / 149597871
-    totalAu = @props.distance
-    travelSeconds = totalAu / speedOfLightAu
-    lightSpeedYears = numFmt(d3.round(travelSeconds / 60 / 60 / 24/ 365, 1))
-    distanceText = "#{vehicle.name} would take #{lightSpeedYears} years to cover your total distance travelled."
-    dom.h4 {className: 'pull-right'}, dom.em(null,distanceText)
+    if @props.distance > 0
+      vehicle = _.sample @vehicles
+      speedKmPerS = vehicle.speed / 1000
+      speedOfLightAu = speedKmPerS / 149597871
+      totalAu = @props.distance
+      travelSeconds = totalAu / speedOfLightAu
+      lightSpeedYears = numFmt(d3.round(travelSeconds / 60 / 60 / 24/ 365, 1))
+      distanceText = "#{vehicle.name} would take #{lightSpeedYears} years to cover your total distance travelled."
+      return dom.h4 {className: 'pull-right'}, dom.em(null,distanceText)
+    else
+      return null
 )
 
 KillsPanel = React.createClass(
@@ -903,28 +910,45 @@ DamageAnalogyPanel = React.createClass(
     #   ehp: 22600000
     #   fit: 'https://o.smium.org/loadout/private/23322/7459269642280763392'
   render: ->
-    ship = _.sample @ships
-    numShips = d3.round(@props.damage / ship.ehp, 1)
-    stamps = []
-    for i in [0...Math.floor(numShips)]
-      stamps.push dom.img {key: i, src: eveIconUrl(ship.id), width: 32, height: 32, className: 'stamp pull-left'}
+    if @props.damage == 0
+      return null
+    else
+      ship = _.sample @ships
+      numShips = d3.round(@props.damage / ship.ehp, 1)
+      stamps = []
+      for i in [0...Math.floor(numShips)]
+        stamps.push dom.img {key: i, src: eveIconUrl(ship.id), width: 32, height: 32, className: 'stamp pull-left'}
 
-    dom.div {className: 'row'},
-      dom.h4 {className: 'pull-left'},
-        dom.em null,"You have dealt enough damage to kill #{numShips} "
-          dom.a {href: ship.fit}, ship.pluralName
-      dom.div {className: 'clearfix'}, ''
-      dom.div {className: ''}, stamps
+      return dom.div {className: 'row'},
+        dom.h4 {className: 'pull-left'},
+          dom.em null,"You have dealt enough damage to kill #{numShips} "
+            dom.a {href: ship.fit}, ship.pluralName
+        dom.div {className: 'clearfix'}, ''
+        dom.div {className: ''}, stamps
 
 )
 
 CalloutPanel = React.createClass(
   displayName: 'CalloutPanel'
+  getDefaultProps: ->
+    return {
+      columns: 1 # 1, 2, 3, 4, 6, 12
+    }
   render: ->
     if @props.callouts
       calloutElements = @props.callouts.map (callout) ->
         return React.createElement(CalloutStat, callout)
-      dom.div null, calloutElements
+      itemsPerCol = Math.ceil(calloutElements.length / @props.columns)
+      columns = []
+      colSize = 12 / @props.columns
+      for i in [0...@props.columns]
+        col = dom.div {className: "col-md-#{colSize}"}, _.take(calloutElements, itemsPerCol)
+        calloutElements.splice(0, itemsPerCol)
+        columns.push col
+      dom.div null,
+        dom.h3 null, @props.title
+        dom.div {className: 'row'},
+          columns
     else
       null
 )
@@ -1044,7 +1068,7 @@ SelfRepPanel = React.createClass(
   render: ->
     dom.div {className: 'row'},
       dom.h3 null, 'Local Reps'
-        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical'})
+        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical', showZero: true})
 )
 
 RepsGivenPanel = React.createClass(
@@ -1068,7 +1092,7 @@ RepsGivenPanel = React.createClass(
   render: ->
     dom.div {className: 'row'},
       dom.h3 null, 'Remote Reps Given'
-        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical'})
+        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical', showZero: true})
 )
 
 RepsReceivedPanel = React.createClass(
@@ -1092,27 +1116,61 @@ RepsReceivedPanel = React.createClass(
   render: ->
     dom.div {className: 'row'},
       dom.h3 null, 'Reps Received'
-        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical'})
+        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical', showZero: true})
 )
 
 PvePanel = React.createClass(
   displayName: 'PvePanel'
   render: ->
-    dom.div null,
-      dom.h3 null, 'PVE'
-      dom.ul null,
-        dom.li null, "Completed #{numFmt @props.stats.pveMissionsSucceeded} missions"
-        dom.li null, "Completed #{numFmt @props.stats.pveMissionsSucceededEpicArc} epic arcs"
-        # These might be broken
-        #dom.li null, "Hacked #{numFmt @props.stats.industryArcheologySuccesses} relic cans"
-        #dom.li null, "Hacked #{numFmt @props.stats.industryHackingSuccesses} data cans"
-        dom.li null, "NPC Combat flagged #{numFmt @props.stats.combatNpcFlagSet} times"
-        dom.li null, "Taken #{numFmt @props.stats.combatDamageFromNPCsAmount} damage from NPCs"
-        dom.li null, "Scrammed #{numFmt @props.stats.combatWarpScrambledbyNPC} times by NPCs"
-        dom.li null, "Webbed #{numFmt @props.stats.combatWebifiedbyNPC} times by NPCs"
+    if @props.stats
+      callouts = [
+        {
+          value: @props.stats.combatNpcFlagSet
+          description: 'NPC Flagged'
+          iconId: styleIconId 'npcFlag'
+        }
+        {
+          value: @props.stats.combatDamageFromNPCsAmount
+          description: 'Damage Taken from NPCs'
+          iconId: styleIconId 'npcDamage'
+        }
+        {
+          value: @props.stats.combatWarpScrambledbyNPC
+          description: 'Scrammed by NPC'
+          iconId: styleIconId 'scram'
+        }
+        {
+          value: @props.stats.combatWebifiedbyNPC
+          description: 'Webbed by NPC'
+          iconId: styleIconId 'web'
+        }
+        {
+          value: @props.stats.pveMissionsSucceeded
+          description: 'Missions Completed'
+          iconId: styleIconId 'mission'
+        }
+        {
+          value: @props.stats.pveMissionsSucceededEpicArc
+          description: 'Epic Arcs Completed'
+          iconId: styleIconId 'epicArc'
+        }
+        {
+          value: @props.stats.industryArcheologySuccesses
+          description: 'Relic Cans Hacked'
+          iconId: styleIconId 'relicCan'
+        }
+        {
+          value: @props.stats.industryHackingSuccesses
+          description: 'Data Cans Hacked'
+          iconId: styleIconId 'dataCan'
+        }
+      ]
+      return React.createElement(CalloutPanel, {title: 'PVE', callouts: callouts, columns: 4})
+    else
+      return null
 )
 
-MiscModuleOnePanel = React.createClass(
+MiscModulePanel = React.createClass(
   displayName: 'MiscModulePanelOne'
   render: ->
     if @props.stats
@@ -1127,36 +1185,11 @@ MiscModuleOnePanel = React.createClass(
           description: 'Cynos Lit'
           iconId: styleIconId 'cyno'
         }
-      ]
-      return React.createElement(CalloutPanel, {callouts: callouts})
-    else
-      return null
-)
-MiscModuleTwoPanel = React.createClass(
-  displayName: 'MiscModulePanelTwo'
-  render: ->
-    if @props.stats
-      callouts = [
         {
           value: @props.stats.moduleActivationsFleetAssist
           description: 'Activated Gang Link'
           iconId: styleIconId 'gangLink'
         }
-        {
-          value: @props.stats.moduleActivationsEwarVampire
-          description: 'Activated NOS'
-          iconId: styleIconId 'nos'
-        }
-      ]
-      return React.createElement(CalloutPanel, {callouts: callouts})
-    else
-      return null
-)
-MiscModuleThreePanel = React.createClass(
-  displayName: 'MiscModulePanelThree'
-  render: ->
-    if @props.stats
-      callouts = [
         {
           value: @props.stats.moduleActivationsEwarECM
           description: 'Violated Space Bushido'
@@ -1172,8 +1205,13 @@ MiscModuleThreePanel = React.createClass(
           description: 'Activated Target Painter'
           iconId: styleIconId 'painter'
         }
+        {
+          value: @props.stats.moduleActivationsEwarVampire
+          description: 'Activated NOS'
+          iconId: styleIconId 'nos'
+        }
       ]
-      return React.createElement(CalloutPanel, {callouts: callouts})
+      return React.createElement(CalloutPanel, {callouts: callouts, columns: 4})
     else
       return null
 )
@@ -1222,7 +1260,7 @@ IndustryJobsPanel = React.createClass(
     return data
   render: ->
     dom.div {className: 'row'},
-      dom.h3 null, 'Manufacturing Jobs'
+      dom.h3 null, 'Manufacturing Jobs', ' ', dom.small(null, 'Units Produced')
         React.createElement(PieDataPanel,{data: @chartData()})
 )
 
@@ -1333,9 +1371,9 @@ MiningPanel = React.createClass(
     ]
     return data
   render: ->
-    dom.div {className: 'row'},
+    dom.div {className: ''},
       dom.h3 null, 'Mining'
-        React.createElement(PieDataPanel,{data: @chartData()})
+      React.createElement(PieDataPanel,{data: @chartData()})
 )
 
 ISKPanel = React.createClass(
@@ -1399,10 +1437,10 @@ ContactsPanel = React.createClass(
         value: @props.stats["social#{str}ContactHorrible"]
       }
     ]
-    dom.div {className: 'row'},
+    dom.div {className: ''},
       dom.h3 null,
         title
-      React.createElement(PieDataPanel, {data: data})
+      React.createElement(PieDataPanel, {data: data, showZero: true})
 
 )
 
@@ -1444,6 +1482,7 @@ PieDataPanel = React.createClass(
     return {
       chartType: 'pie'
       layout: 'horizontal'
+      showZero: false
     }
   deriveData: (sortFn) ->
     tmp = _.clone @props.data
@@ -1466,8 +1505,11 @@ PieDataPanel = React.createClass(
         sortFn = (a, b) -> return HP_BAR_ORDER.indexOf(a.key) - HP_BAR_ORDER.indexOf(b.key)
     data = @deriveData(sortFn)
 
+    if @total == 0
+      return dom.div null, "No activity this year"
+
     chart = React.createElement(chartElementType, {data: data, total: @total})
-    table = React.createElement(PieDataTable,{data: data, total: @total})
+    table = React.createElement(PieDataTable,{data: data, total: @total, showZero: @props.showZero})
 
     if @props.layout is 'horizontal'
       return dom.div {className: 'row'},
@@ -1481,9 +1523,15 @@ PieDataPanel = React.createClass(
 
 PieDataTable = React.createClass(
   displayName: 'PieDataTable'
+  getDefaultProps: ->
+    return {
+      showZero: false
+    }
   render: ->
     colors = d3.scale.category20()
     rows = _.map @props.data, (d) =>
+      if d.value == 0 and not @props.showZero
+        return null
       color = STYLES[d.key].color ? colors(d.key)
       iconCell = dom.td null,
         dom.div {className: "circle", style: {backgroundColor: color}}, null
