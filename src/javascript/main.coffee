@@ -56,8 +56,8 @@ SSO_HOST = CONFIG[env].sso_host
 SSO_CLIENT_ID = client.sso_client_id
 CREST_HOST = CONFIG[env].crest_host
 
+
 React = require 'react'
-request = require 'request'
 $ = require 'jquery'
 d3 = require 'd3'
 _ = require 'lodash'
