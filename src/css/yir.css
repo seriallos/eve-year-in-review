@@ -6,16 +6,39 @@
 }
 
 .vert-center {
-  min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
-  min-height: 100vh; /* These two lines are counted as one :-)       */
+  min-height: 75%;  /* Fallback for browsers do NOT support vh unit */
+  min-height: 75vh; /* These two lines are counted as one :-)       */
 
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
 .translucent {
   background-color: rgba(0, 0, 0, 0.7);
   padding: 40px;
+}
+
+.whatIsThis {
+  width: 400px;
+  margin-bottom: 20px;
+}
+
+.noAccountText {
+  margin-top: 20px;
+}
+
+.techDetails {
+  width: 400px;
+  margin-top: 30px;
+}
+
+.broughtToYou {
+  margin-top: 30px;
+}
+
+.pointer {
+  cursor: pointer;
 }
 
 .axis text {

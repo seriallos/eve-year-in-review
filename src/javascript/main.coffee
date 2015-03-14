@@ -361,9 +361,14 @@ StatsUI = React.createClass(
   render: ->
     if @state.ssoState == 'login'
       return dom.div {className: 'vert-center'},
-        dom.h2 null, 'EVE: Year in Review'
-        dom.div null, React.createElement(SSOLoginButton)
-        dom.div null, "Don't have an EVE account?  ", dom.a({onClick: @loadSampleData}, 'Take a look at my stats.')
+        dom.div {className: 'text-center translucent'},
+          dom.h2 null, 'EVE: Year in Review'
+          dom.div {className: 'whatIsThis'}, "Your character's story told in charts and numbers based on aggregate data from 2014 and 2013.  A preview of CREST data coming to TQ Soon."
+          dom.div null, React.createElement(SSOLoginButton)
+          dom.div {className: 'noAccountText'}, "Don't want to commit just yet? "
+          dom.div null, dom.a({className: 'pointer', onClick: @loadSampleData}, 'Take a look at my stats.')
+          dom.div {className: 'techDetails'}, "This app requires JavaScript and utilizes EVE's Single Sign On technology.  Your data is only transferred to your browser and never stored on the server.  Basic usage analytics will be collected."
+          dom.div {className: 'broughtToYou'}, "Brought to you by Bellatroix (", dom.a({href:'https://twitter.com/sollaires'}, '@sollaires'), ")"
     else if @state.ssoState == 'loading'
       return dom.div {className: 'vert-center'}, "Verifying SSO..."
     else if not @state.stats
