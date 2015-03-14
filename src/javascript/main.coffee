@@ -332,15 +332,19 @@ StatsUI = React.createClass(
         else
           charUrlParsed = urlParse data.character.href
           [ foo, foo, characterId ] = charUrlParsed.path.split '/'
-          @setState {character: {id: characterId, name: ''}}
+          @setState {character: {id: characterId, name: '', url: data.character.href}}
           statsUrl = data.character.href + "statistics/year/2014/"
           jrequest data.character.href, (err, data, xhr) =>
             char = @state.character
             char.name = data.name
             @setState {character: char}
-          jrequest statsUrl, (err, data, xhr) =>
-            stats = new CharacterStats(data)
-            @setState {stats: stats, year: 2014, ssoState: 'loaded'}
+          @loadStatsYear(2014)
+
+  loadStatsYear: (year) ->
+    url = "#{@state.character.url}statistics/year/#{year}/"
+    jrequest url, (err, data, xhr) =>
+      stats = new CharacterStats(data)
+      @setState {stats: stats, year: year, ssoState: 'loaded'}
 
   loadSampleData: ->
     host = window.location.host
@@ -367,8 +371,8 @@ StatsUI = React.createClass(
           dom.div null, React.createElement(SSOLoginButton)
           dom.div {className: 'noAccountText'}, "Don't want to commit just yet? "
           dom.div null, dom.a({className: 'pointer', onClick: @loadSampleData}, 'Take a look at my stats.')
-          dom.div {className: 'techDetails'}, "This app requires JavaScript and utilizes EVE's Single Sign On technology.  Your data is only transferred to your browser and never stored on the server.  Basic usage analytics will be collected."
-          dom.div {className: 'broughtToYou'}, "Brought to you by Bellatroix (", dom.a({href:'https://twitter.com/sollaires'}, '@sollaires'), ")"
+          #dom.div {className: 'techDetails'}, "This app requires JavaScript and utilizes EVE's Single Sign On technology.  Your data is only transferred to your browser and never stored on the server.  Basic usage analytics will be collected."
+          dom.div {className: 'broughtToYou'}, "Brought to you by Bellatroix (", dom.a({href:'https://twitter.com/sollaires'}, '@sollaires'), "), designed by ", dom.a({href:'https://twitter.com/baletsa'}, '@baletsa')
     else if @state.ssoState == 'loading'
       return dom.div {className: 'vert-center'}, "Verifying SSO..."
     else if not @state.stats
@@ -377,7 +381,7 @@ StatsUI = React.createClass(
 
       facts = new CharacterFacts(@state.stats).getFacts()
 
-      title = React.createElement(Title, {character: @state.character, year: @state.year})
+      title = React.createElement(Title, {character: @state.character, year: @state.year, switchToYear: @loadStatsYear, hideSwitch: @state.sample})
 
       charInfoPanel = React.createElement(CharacterInfoPanel, {character: @state.character, facts: facts, stats: @state.stats})
 
@@ -539,14 +543,20 @@ SSOLoginButton = React.createClass(
 
 Title = React.createClass(
   displayName: 'Title'
+  switchYear: ->
+    return if @props.year == 2014 then 2013 else 2014
+  onClick: ->
+    this.props.switchToYear(@switchYear())
   render: ->
-    dom.h2 null, "#{@props.character.name}'s Year in Review, #{@props.year}"
+    dom.h2 null,
+      "#{@props.character.name}'s Year in Review, #{@props.year}"
+      if not @props.hideSwitch then dom.small null, " ", dom.a({onClick: @onClick}, "View #{@switchYear()}")
 )
 
 CharacterInfoPanel = React.createClass(
   displayName: 'CharacterInfoPanel'
   render: ->
-    avgSession = humanizeMinutes(Math.round(@props.stats.characterMinutes / @props.stats.characterSessionsStarted))
+    avgSession = Math.round(@props.stats.characterMinutes / @props.stats.characterSessionsStarted)
     dom.div {className: 'row'},
       dom.div {className: 'col-md-4'},
         React.createElement(CharacterAvatar, {id: @props.character.id})
@@ -554,7 +564,7 @@ CharacterInfoPanel = React.createClass(
         React.createElement CalloutStat, {value: humanizeMinutes(@props.stats.characterMinutes), description: 'Time Played'}
         React.createElement CalloutStat, {value: numFmt(@props.stats.daysOfActivity), description: 'Active Days'}
         React.createElement CalloutStat, {value: numFmt(@props.stats.characterSessionsStarted), description: 'Logins'}
-        React.createElement CalloutStat, {value: avgSession, description: 'Avereage Session Length'}
+        React.createElement CalloutStat, {value: humanizeMinutes(avgSession), description: 'Avereage Session Length'}
 )
 
 CharacterAvatar = React.createClass(
