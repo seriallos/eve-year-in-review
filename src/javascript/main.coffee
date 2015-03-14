@@ -301,9 +301,9 @@ StatsUI = React.createClass(
       token: null
       stats: null
       character:
-        name: 'Bellatroix'
-        id: 1412571394
-      year: 2014
+        name: null
+        id: null
+      year: null
     }
   componentDidMount: ->
     hash = window.location.hash.substring(1)
