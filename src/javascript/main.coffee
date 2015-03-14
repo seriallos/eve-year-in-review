@@ -151,6 +151,21 @@ STYLES =
   overheat:
     icon: 'images/overheat.png'
 
+  cyno:
+    iconId: 21096
+  cloak:
+    iconId: 11370
+  gangLink:
+    iconId: 20070
+  damp:
+    iconId: 1968
+  ecm:
+    iconId: 1957
+  painter:
+    iconId: 12709
+  nos:
+    iconId: 12261
+
   high:
     label: 'High Sec'
     color: '#579C48'
@@ -433,7 +448,9 @@ StatsUI = React.createClass(
 
       pveStats = React.createElement(PvePanel, {stats: @state.stats})
 
-      miscModules = React.createElement(MiscModulePanel, {stats: @state.stats})
+      miscModules1 = React.createElement(MiscModuleOnePanel, {stats: @state.stats})
+      miscModules2 = React.createElement(MiscModuleTwoPanel, {stats: @state.stats})
+      miscModules3 = React.createElement(MiscModuleThreePanel, {stats: @state.stats})
 
       industryJobs = React.createElement(IndustryJobsPanel, {stats: @state.stats})
       blueprints = React.createElement(IndustryBlueprintPanel, {stats: @state.stats})
@@ -499,8 +516,12 @@ StatsUI = React.createClass(
         # PVE Stats
 
         dom.div {className: 'row'},
+          dom.div {className: 'col-md-4'}, miscModules1
+          dom.div {className: 'col-md-4'}, miscModules3
+          dom.div {className: 'col-md-4'}, miscModules2
+
+        dom.div {className: 'row'}
           dom.div {className: 'col-md-6'}, pveStats
-          dom.div {className: 'col-md-6'}, miscModules
 
         # ISK / Markets
         dom.div {className: 'row'},
@@ -509,12 +530,12 @@ StatsUI = React.createClass(
 
         # Industry
         dom.div {className: 'row'},
+          dom.div {className: 'col-md-6'}, miningPanel
           dom.div {className: 'col-md-6'}, industryJobs
-          dom.div {className: 'col-md-6'}, blueprints
 
         # Mining
         dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, miningPanel
+          dom.div {className: 'col-md-6'}, blueprints
 
 
         # Social
@@ -1091,19 +1112,70 @@ PvePanel = React.createClass(
         dom.li null, "Webbed #{numFmt @props.stats.combatWebifiedbyNPC} times by NPCs"
 )
 
-MiscModulePanel = React.createClass(
-  displayName: 'MiscModulePanel'
+MiscModuleOnePanel = React.createClass(
+  displayName: 'MiscModulePanelOne'
   render: ->
-    dom.div {className: ''},
-      dom.h3 null, 'Modules'
-      dom.ul null,
-        dom.li null, "Lit #{numFmt @props.stats.moduleActivationsCyno} cynos"
-        dom.li null, "Cloaked #{numFmt @props.stats.moduleActivationsCloaking} times"
-        dom.li null, "Activated #{numFmt @props.stats.moduleActivationsFleetAssist} links"
-        dom.li null, "#{numFmt @props.stats.moduleActivationsEwarDampener} sensor damp activations"
-        dom.li null, "Violated SPACE BUSHIDO #{numFmt @props.stats.moduleActivationsEwarECM} times (ECM Activations)"
-        dom.li null, "#{numFmt @props.stats.moduleActivationsEwarTargetPainter} TP activations"
-        dom.li null, "#{numFmt @props.stats.moduleActivationsEwarVampire} NOS activations"
+    if @props.stats
+      callouts = [
+        {
+          value: @props.stats.moduleActivationsCloaking
+          description: 'Activated Cloak'
+          iconId: styleIconId 'cloak'
+        }
+        {
+          value: @props.stats.moduleActivationsCyno
+          description: 'Cynos Lit'
+          iconId: styleIconId 'cyno'
+        }
+      ]
+      return React.createElement(CalloutPanel, {callouts: callouts})
+    else
+      return null
+)
+MiscModuleTwoPanel = React.createClass(
+  displayName: 'MiscModulePanelTwo'
+  render: ->
+    if @props.stats
+      callouts = [
+        {
+          value: @props.stats.moduleActivationsFleetAssist
+          description: 'Activated Gang Link'
+          iconId: styleIconId 'gangLink'
+        }
+        {
+          value: @props.stats.moduleActivationsEwarVampire
+          description: 'Activated NOS'
+          iconId: styleIconId 'nos'
+        }
+      ]
+      return React.createElement(CalloutPanel, {callouts: callouts})
+    else
+      return null
+)
+MiscModuleThreePanel = React.createClass(
+  displayName: 'MiscModulePanelThree'
+  render: ->
+    if @props.stats
+      callouts = [
+        {
+          value: @props.stats.moduleActivationsEwarECM
+          description: 'Violated Space Bushido'
+          iconId: styleIconId 'ecm'
+        }
+        {
+          value: @props.stats.moduleActivationsEwarDampener
+          description: 'Activated Sensor Damp'
+          iconId: styleIconId 'damp'
+        }
+        {
+          value: @props.stats.moduleActivationsEwarTargetPainter
+          description: 'Activated Target Painter'
+          iconId: styleIconId 'painter'
+        }
+      ]
+      return React.createElement(CalloutPanel, {callouts: callouts})
+    else
+      return null
 )
 
 IndustryJobsPanel = React.createClass(
