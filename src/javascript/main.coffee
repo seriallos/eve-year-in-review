@@ -902,19 +902,19 @@ MiscPvpStats = React.createClass(
         dom.li null,
           dom.img {src: 'images/pvpFlag.png'}
           ' '
-          "PVP flagged #{@props.stats.combatPvpFlagSet} times"
+          "PVP flagged #{numFmt @props.stats.combatPvpFlagSet} times"
         dom.li null,
           dom.img {src: 'images/criminalFlag.png'}
           ' '
-          "Criminally flagged #{@props.stats.combatCriminalFlagSet} times"
+          "Criminally flagged #{numFmt @props.stats.combatCriminalFlagSet} times"
         dom.li null,
           dom.img {src: 'images/duel.png'}
           ' '
-          "Requested #{@props.stats.combatDuelRequested} duels"
+          "Requested #{numFmt @props.stats.combatDuelRequested} duels"
         dom.li null,
           dom.img {src: 'images/overheat.png'}
           ' '
-          "Overloaded #{@props.stats.moduleOverload} modules"
+          "Overloaded #{numFmt @props.stats.moduleOverload} modules"
 )
 
 SelfRepPanel = React.createClass(
@@ -995,14 +995,14 @@ PvePanel = React.createClass(
     dom.div null,
       dom.h3 null, 'PVE'
       dom.ul null,
-        dom.li null, "Completed #{@props.stats.pveMissionsSucceeded} missions"
-        dom.li null, "Completed #{@props.stats.pveMissionsSucceededEpicArc} epic arcs"
-        dom.li null, "Hacked #{@props.stats.industryArcheologySuccesses} relic cans"
-        dom.li null, "Hacked #{@props.stats.industryHackingSuccesses} data cans"
-        dom.li null, "NPC Combat flagged #{@props.stats.combatNpcFlagSet} times"
-        dom.li null, "Taken #{@props.stats.combatDamageFromNPCsAmount} damage from NPCs"
-        dom.li null, "Scrammed #{@props.stats.combatWarpScrambledbyNPC} times by NPCs"
-        dom.li null, "Webbed #{@props.stats.combatWebifiedbyNPC} times by NPCs"
+        dom.li null, "Completed #{numFmt @props.stats.pveMissionsSucceeded} missions"
+        dom.li null, "Completed #{numFmt @props.stats.pveMissionsSucceededEpicArc} epic arcs"
+        dom.li null, "Hacked #{numFmt @props.stats.industryArcheologySuccesses} relic cans"
+        dom.li null, "Hacked #{numFmt @props.stats.industryHackingSuccesses} data cans"
+        dom.li null, "NPC Combat flagged #{numFmt @props.stats.combatNpcFlagSet} times"
+        dom.li null, "Taken #{numFmt @props.stats.combatDamageFromNPCsAmount} damage from NPCs"
+        dom.li null, "Scrammed #{numFmt @props.stats.combatWarpScrambledbyNPC} times by NPCs"
+        dom.li null, "Webbed #{numFmt @props.stats.combatWebifiedbyNPC} times by NPCs"
 )
 
 MiscModulePanel = React.createClass(
@@ -1011,13 +1011,13 @@ MiscModulePanel = React.createClass(
     dom.div {className: ''},
       dom.h3 null, 'Modules'
       dom.ul null,
-        dom.li null, "Lit #{@props.stats.moduleActivationsCyno} cynos"
-        dom.li null, "Cloaked #{@props.stats.moduleActivationsCloaking} times"
-        dom.li null, "Activated #{@props.stats.moduleActivationsFleetAssist} links"
-        dom.li null, "#{@props.stats.moduleActivationsEwarDampener} sensor damp activations"
-        dom.li null, "Violated SPACE BUSHIDO #{@props.stats.moduleActivationsEwarECM} times (ECM Activations)"
-        dom.li null, "#{@props.stats.moduleActivationsEwarTargetPainter} TP activations"
-        dom.li null, "#{@props.stats.moduleActivationsEwarVampire} NOS activations"
+        dom.li null, "Lit #{numFmt @props.stats.moduleActivationsCyno} cynos"
+        dom.li null, "Cloaked #{numFmt @props.stats.moduleActivationsCloaking} times"
+        dom.li null, "Activated #{numFmt @props.stats.moduleActivationsFleetAssist} links"
+        dom.li null, "#{numFmt @props.stats.moduleActivationsEwarDampener} sensor damp activations"
+        dom.li null, "Violated SPACE BUSHIDO #{numFmt @props.stats.moduleActivationsEwarECM} times (ECM Activations)"
+        dom.li null, "#{numFmt @props.stats.moduleActivationsEwarTargetPainter} TP activations"
+        dom.li null, "#{numFmt @props.stats.moduleActivationsEwarVampire} NOS activations"
 )
 
 IndustryJobsPanel = React.createClass(
@@ -1252,11 +1252,11 @@ SocialMiscPanel = React.createClass(
     dom.div {className: ''},
       dom.ul null,
         dom.li null, "#{numFmt(@props.stats.socialChatTotalMessageLength)} characters written in chat"
-        dom.li null, "#{@props.stats.socialMailsSent} mails sent"
-        dom.li null, "#{@props.stats.socialMailsReceived} mails received"
-        dom.li null, "#{@props.stats.socialDirectTrades} direct trades made"
-        dom.li null, "#{@props.stats.socialFleetJoins} fleets joined"
-        dom.li null, "#{@props.stats.socialFleetBroadcasts} fleet broadcasts made"
+        dom.li null, "#{numFmt @props.stats.socialMailsSent} mails sent"
+        dom.li null, "#{numFmt @props.stats.socialMailsReceived} mails received"
+        dom.li null, "#{numFmt @props.stats.socialDirectTrades} direct trades made"
+        dom.li null, "#{numFmt @props.stats.socialFleetJoins} fleets joined"
+        dom.li null, "#{numFmt @props.stats.socialFleetBroadcasts} fleet broadcasts made"
 )
 
 MiscStats = React.createClass(
@@ -1264,16 +1264,16 @@ MiscStats = React.createClass(
   render: ->
     dom.div {className: ''},
       dom.ul null,
-        dom.li null, "#{@props.stats.genericConeScans} Directional Scans"
-        dom.li null, "#{@props.stats.genericRequestScans} Probe Scans"
-        dom.li null, "#{@props.stats.travelWarpsToCelestial} warps to celestial"
-        dom.li null, "#{@props.stats.travelWarpsToBookmark} warps to bookmark"
-        dom.li null, "#{@props.stats.travelWarpsToFleetMember} warps to fleet member"
-        dom.li null, "#{@props.stats.travelWarpsToScanResult} warps to scan result"
-        dom.li null, "#{@props.stats.travelAlignTo} aligns"
-        dom.li null, "#{@props.stats.travelAccelerationGateActivations} acceleration gate activations"
-        dom.li null, "#{@props.stats.combatSelfDestructs} self destructs"
-        dom.li null, "#{@props.stats.inventoryTrashItemQuantity} items trashed"
+        dom.li null, "#{numFmt @props.stats.genericConeScans} Directional Scans"
+        dom.li null, "#{numFmt @props.stats.genericRequestScans} Probe Scans"
+        dom.li null, "#{numFmt @props.stats.travelWarpsToCelestial} warps to celestial"
+        dom.li null, "#{numFmt @props.stats.travelWarpsToBookmark} warps to bookmark"
+        dom.li null, "#{numFmt @props.stats.travelWarpsToFleetMember} warps to fleet member"
+        dom.li null, "#{numFmt @props.stats.travelWarpsToScanResult} warps to scan result"
+        dom.li null, "#{numFmt @props.stats.travelAlignTo} aligns"
+        dom.li null, "#{numFmt @props.stats.travelAccelerationGateActivations} acceleration gate activations"
+        dom.li null, "#{numFmt @props.stats.combatSelfDestructs} self destructs"
+        dom.li null, "#{numFmt @props.stats.inventoryTrashItemQuantity} items trashed"
 )
 
 PieDataPanel = React.createClass(
