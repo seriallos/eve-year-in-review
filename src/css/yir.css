@@ -41,6 +41,10 @@
   cursor: pointer;
 }
 
+.stamp {
+  margin: 1px;
+}
+
 .axis text {
   fill: white;
 }
@@ -59,12 +63,33 @@ div.circle {
   text-align: right;
 }
 
+.callout {
+  margin-bottom: 10px;
+}
+
 .callout > .value {
   text-align: center;
+  vertical-align: middle;
   font-size: 300%;
   font-weight: bold;
+}
+.callout > .value > .iconWrap {
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 64px;
+  margin-right: 10px;
+}
+.callout > .value > .iconWrap > img {
+  float: right;
+}
+.callout > .value > span {
+  line-height: 64px;
+  vertical-align: middle;
 }
 
 .callout > .description {
   text-align: center;
+  /* pull description up just a bit */
+  margin-top: -8px;
 }
+

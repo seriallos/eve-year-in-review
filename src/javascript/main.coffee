@@ -117,12 +117,13 @@ STYLES =
     iconId: 1
   dd:
     label: 'Doomsday'
-    color: 'black'
+    color: '#666'
     iconId: 24550
   shield:
     label: 'Shield'
     color: 'white'
     iconId: 10838
+
   web:
     label: 'Stasis Webifier'
     iconId: 526
@@ -140,6 +141,15 @@ STYLES =
     label: 'Hull'
     color: 'white'
     iconId: 3663
+
+  pvpFlag:
+    icon: 'images/pvpFlag.png'
+  criminalFlag:
+    icon: 'images/criminalFlag.png'
+  duel:
+    icon: 'images/duel.png'
+  overheat:
+    icon: 'images/overheat.png'
 
   high:
     label: 'High Sec'
@@ -260,6 +270,9 @@ HP_BAR_ORDER = ['shield','armor','hull']
 styleIconUrl = (key, width = 32) ->
   return eveIconUrl(STYLES[key].iconId, width)
 
+styleIconId = (key) ->
+  return STYLES[key].iconId
+
 eveIconUrl = (id, width = 32) ->
   return "https://image.eveonline.com/Type/#{id}_#{width}.png"
 
@@ -373,7 +386,7 @@ StatsUI = React.createClass(
           #dom.div {className: 'techDetails'}, "This app requires JavaScript and utilizes EVE's Single Sign On technology.  Your data is only transferred to your browser and never stored on the server.  Basic usage analytics will be collected."
           dom.div {className: 'broughtToYou'}, "Brought to you by Bellatroix (", dom.a({href:'https://twitter.com/sollaires'}, '@sollaires'), "), designed by ", dom.a({href:'https://twitter.com/baletsa'}, '@baletsa')
     else if @state.ssoState == 'loading'
-      return dom.div {className: 'vert-center'}, "Verifying SSO..."
+      return dom.div {className: 'vert-center'}, "Verifying SSO token and loading your stats..."
     else if not @state.stats
       return dom.div {className: 'vert-center'}, "Loading Your Stats..."
     else
@@ -411,8 +424,8 @@ StatsUI = React.createClass(
 
       pvpModulesUsage = React.createElement(PvpModulesUsage, {stats: @state.stats})
       pvpModulesAgainst = React.createElement(PvpModulesAgainst, {stats: @state.stats})
-
       miscPvpStats = React.createElement(MiscPvpStats, {stats: @state.stats})
+      miscTooPvpStats = React.createElement(MiscTooPvpStats, {stats: @state.stats})
 
       selfRepPanel = React.createElement(SelfRepPanel, {stats: @state.stats})
       repsReceivedPanel = React.createElement(RepsReceivedPanel, {stats: @state.stats})
@@ -470,11 +483,10 @@ StatsUI = React.createClass(
           dom.div {className: 'col-md-12'}, damageAnalogy
 
         dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, pvpModulesUsage
-          dom.div {className: 'col-md-6'}, pvpModulesAgainst
-
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, miscPvpStats
+          dom.div {className: 'col-md-3'}, pvpModulesUsage
+          dom.div {className: 'col-md-3'}, pvpModulesAgainst
+          dom.div {className: 'col-md-3'}, miscPvpStats
+          dom.div {className: 'col-md-3'}, miscTooPvpStats
 
         # TODO: without spacer columns, things overlap for some reason.  fix that!
         dom.div {className: 'row'},
@@ -581,8 +593,16 @@ CharacterAvatar = React.createClass(
 CalloutStat = React.createClass(
   displayName: 'CalloutStat'
   render: ->
+    icon = null
+    iconWrap = null
+    if @props.iconId
+      icon = dom.img {src: eveIconUrl(@props.iconId, 64), width: 64, height: 64}
+    else if @props.icon
+      icon = dom.img {src: STYLES[@props.icon].icon}
+    if icon
+      iconWrap = dom.span {className: 'iconWrap'}, icon
     dom.div {className: 'callout'},
-      dom.div {className: 'value'}, @props.value
+      dom.div {className: 'value'}, iconWrap, @props.value
       dom.div {className: 'description'}, @props.description
 )
 
@@ -866,32 +886,50 @@ DamageAnalogyPanel = React.createClass(
     numShips = d3.round(@props.damage / ship.ehp, 1)
     stamps = []
     for i in [0...Math.floor(numShips)]
-      stamps.push dom.img {key: i, src: eveIconUrl(ship.id), width: 32, height: 32, className: 'pull-right'}
+      stamps.push dom.img {key: i, src: eveIconUrl(ship.id), width: 32, height: 32, className: 'stamp pull-left'}
 
-    dom.div null,
-      dom.h4 {className: 'pull-right'},
+    dom.div {className: 'row'},
+      dom.h4 {className: 'pull-left'},
         dom.em null,"You have dealt enough damage to kill #{numShips} "
           dom.a {href: ship.fit}, ship.pluralName
       dom.div {className: 'clearfix'}, ''
-      dom.div {className: 'row'}, stamps
+      dom.div {className: ''}, stamps
 
+)
+
+CalloutPanel = React.createClass(
+  displayName: 'CalloutPanel'
+  render: ->
+    if @props.callouts
+      calloutElements = @props.callouts.map (callout) ->
+        return React.createElement(CalloutStat, callout)
+      dom.div null, calloutElements
+    else
+      null
 )
 
 PvpModulesUsage = React.createClass(
   displayName: 'PvpModulesUsage'
   render: ->
     if @props.stats
-      dom.div null,
-        dom.ul null,
-          dom.li null,
-            dom.img {src: styleIconUrl('web', 64), width: 64, height: 64}, null
-            "Webbed #{@props.stats.combatWebifyingPC} players"
-          dom.li null,
-            dom.img {src: styleIconUrl('scram', 64), width: 64, height: 64}, null
-            "Warp scrambled #{@props.stats.combatWarpScramblePC} players"
-          dom.li null,
-            dom.img {src: styleIconUrl('neut', 64), width: 64, height: 64}, null
-            "#{@props.stats.combatCapDrainingPC} GJ drained from players"
+      callouts = [
+        {
+          value: @props.stats.combatWebifyingPC
+          description: 'Webbed Players'
+          iconId: styleIconId 'web'
+        }
+        {
+          value: @props.stats.combatWarpScramblePC
+          description: 'Pointed Players'
+          iconId: styleIconId 'scram'
+        }
+        {
+          value: @props.stats.combatCapDrainingPC
+          description: 'GJ Drained from Players'
+          iconId: styleIconId 'neut'
+        }
+      ]
+      return React.createElement(CalloutPanel, {callouts: callouts})
     else
       null
 )
@@ -899,40 +937,69 @@ PvpModulesUsage = React.createClass(
 PvpModulesAgainst = React.createClass(
   displayName: 'PvpModulesAgainst'
   render: ->
-    dom.div null,
-      dom.ul null,
-        dom.li null,
-          dom.img {src: styleIconUrl 'web', 64}, null
-          "Webbed #{@props.stats.combatWebifiedbyPC} times by other players"
-        dom.li null,
-          dom.img {src: styleIconUrl 'scram', 64}, null
-          "Warp scrambled #{@props.stats.combatWarpScrambledbyPC} times by other players"
-        dom.li null,
-          dom.img {src: styleIconUrl 'neut', 64}, null
-          "Other players have drained #{@props.stats.combatCapDrainedbyPC} GJ from you"
+    if @props.stats
+      callouts = [
+        {
+          value: @props.stats.combatWebifiedbyPC
+          description: 'Webbed by Players'
+          iconId: styleIconId 'web'
+        }
+        {
+          value: @props.stats.combatWarpScrambledbyPC
+          description: 'Pointed by Players'
+          iconId: styleIconId 'scram'
+        }
+        {
+          value: @props.stats.combatCapDrainedbyPC
+          description: 'GJ Drained by Players'
+          iconId: styleIconId 'neut'
+        }
+      ]
+      return React.createElement(CalloutPanel, {callouts: callouts})
+    else
+      return null
 )
 
 MiscPvpStats = React.createClass(
   displayName: 'MiscPvpStats'
   render: ->
-    dom.div null,
-      dom.ul null,
-        dom.li null,
-          dom.img {src: 'images/pvpFlag.png'}
-          ' '
-          "PVP flagged #{numFmt @props.stats.combatPvpFlagSet} times"
-        dom.li null,
-          dom.img {src: 'images/criminalFlag.png'}
-          ' '
-          "Criminally flagged #{numFmt @props.stats.combatCriminalFlagSet} times"
-        dom.li null,
-          dom.img {src: 'images/duel.png'}
-          ' '
-          "Requested #{numFmt @props.stats.combatDuelRequested} duels"
-        dom.li null,
-          dom.img {src: 'images/overheat.png'}
-          ' '
-          "Overloaded #{numFmt @props.stats.moduleOverload} modules"
+    if @props.stats
+      callouts = [
+        {
+          value: @props.stats.combatPvpFlagSet
+          description: 'PVP Flags'
+          icon: 'pvpFlag'
+        }
+        {
+          value: @props.stats.combatCriminalFlagSet
+          description: 'Criminal Flags'
+          icon: 'criminalFlag'
+        }
+      ]
+      return React.createElement(CalloutPanel, {callouts: callouts})
+    else
+      return null
+)
+
+MiscTooPvpStats = React.createClass(
+  displayName: 'MiscTooPvpStats'
+  render: ->
+    if @props.stats
+      callouts = [
+        {
+          value: @props.stats.moduleOverload
+          description: 'Overheated Modules'
+          icon: 'overheat'
+        }
+        {
+          value: @props.stats.combatDuelRequested
+          description: 'Duel Requests'
+          icon: 'duel'
+        }
+      ]
+      return React.createElement(CalloutPanel, {callouts: callouts})
+    else
+      return null
 )
 
 SelfRepPanel = React.createClass(
@@ -1015,8 +1082,9 @@ PvePanel = React.createClass(
       dom.ul null,
         dom.li null, "Completed #{numFmt @props.stats.pveMissionsSucceeded} missions"
         dom.li null, "Completed #{numFmt @props.stats.pveMissionsSucceededEpicArc} epic arcs"
-        dom.li null, "Hacked #{numFmt @props.stats.industryArcheologySuccesses} relic cans"
-        dom.li null, "Hacked #{numFmt @props.stats.industryHackingSuccesses} data cans"
+        # These might be broken
+        #dom.li null, "Hacked #{numFmt @props.stats.industryArcheologySuccesses} relic cans"
+        #dom.li null, "Hacked #{numFmt @props.stats.industryHackingSuccesses} data cans"
         dom.li null, "NPC Combat flagged #{numFmt @props.stats.combatNpcFlagSet} times"
         dom.li null, "Taken #{numFmt @props.stats.combatDamageFromNPCsAmount} damage from NPCs"
         dom.li null, "Scrammed #{numFmt @props.stats.combatWarpScrambledbyNPC} times by NPCs"
