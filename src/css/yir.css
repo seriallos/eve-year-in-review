@@ -5,6 +5,14 @@ body {
   padding: 0;
 }
 
+.vert-center {
+  min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
+  min-height: 100vh; /* These two lines are counted as one :-)       */
+
+  display: flex;
+  align-items: center;
+}
+
 .translucent {
   background-color: rgba(0, 0, 0, 0.7);
   padding: 40px;

@@ -304,11 +304,12 @@ StatsUI = React.createClass(
         name: null
         id: null
       year: null
+      sample: false
     }
   componentDidMount: ->
     hash = window.location.hash.substring(1)
     hashParts = qs.parse(hash)
-    #window.location.hash = ''
+    window.location.hash = ''
     if hashParts.access_token
       token = hashParts.access_token
       @setState {ssoState: 'loading', token: token}
@@ -321,22 +322,19 @@ StatsUI = React.createClass(
           headers:
             Authorization: "Bearer #{token}"
           error: (xhr, status, error) ->
-            console.log xhr.status
-            console.log(status)
+            console.error xhr.status
+            console.error(status)
             console.error(error);
       })
       jrequest "#{CREST_HOST}/decode/", (error, data, xhr) =>
-        console.log status
         if xhr.status == 401
           @setState {ssoState: 'login', token: null}
         else
-          console.log "href", data.character.href
           charUrlParsed = urlParse data.character.href
           [ foo, foo, characterId ] = charUrlParsed.path.split '/'
           @setState {character: {id: characterId, name: ''}}
           statsUrl = data.character.href + "statistics/year/2014/"
           jrequest data.character.href, (err, data, xhr) =>
-            #console.log data
             char = @state.character
             char.name = data.name
             @setState {character: char}
@@ -344,26 +342,36 @@ StatsUI = React.createClass(
             stats = new CharacterStats(data)
             @setState {stats: stats, year: 2014, ssoState: 'loaded'}
 
-  loadData: ->
-    source = "null_pvp"
-    source = _.sample samples
+  loadSampleData: ->
     host = window.location.host
     proto = window.location.protocol
     opts =
-      url: "#{proto}//#{host}/sampledata/#{source}.json"
+      url: "#{proto}//#{host}/bella.json"
       method: 'GET'
       json: true
     request opts, (err, res, data) =>
       stats = new CharacterStats(data)
-      @setState {stats: stats, year: data.aggregateYear, ssoState: 'loaded'}
+      @setState {
+        sample: true
+        stats: stats,
+        year: 2014,
+        ssoState: 'loaded'
+        character: {
+          name: 'Bellatroix'
+          id: 1412571394
+        }
+      }
 
   render: ->
     if @state.ssoState == 'login'
-      return React.createElement(SSOLoginButton)
+      return dom.div {className: 'vert-center'},
+        dom.h2 null, 'EVE: Year in Review'
+        dom.div null, React.createElement(SSOLoginButton)
+        dom.div null, "Don't play EVE?  ", dom.a({onClick: @loadSampleData}, 'Take a look at my stats.')
     else if @state.ssoState == 'loading'
-      return dom.div null, "Verifying SSO..."
+      return dom.div {className: 'vert-center'}, "Verifying SSO..."
     else if not @state.stats
-      return dom.div null, "Loading Your Stats..."
+      return dom.div {className: 'vert-center'}, "Loading Your Stats..."
     else
 
       facts = new CharacterFacts(@state.stats).getFacts()
@@ -475,10 +483,13 @@ StatsUI = React.createClass(
         # PVE Stats
 
         dom.div {className: 'row'},
-          dom.div {className: 'col-md-12'}, pveStats
+          dom.div {className: 'col-md-6'}, pveStats
+          dom.div {className: 'col-md-6'}, miscModules
 
+        # ISK / Markets
         dom.div {className: 'row'},
-          dom.div {className: 'col-md-12'}, miscModules
+          dom.div {className: 'col-md-6'}, iskPanel
+          dom.div {className: 'col-md-6'}, marketPanel
 
         # Industry
         dom.div {className: 'row'},
@@ -489,10 +500,6 @@ StatsUI = React.createClass(
         dom.div {className: 'row'},
           dom.div {className: 'col-md-6'}, miningPanel
 
-        # Markets
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, iskPanel
-          dom.div {className: 'col-md-6'}, marketPanel
 
         # Social
         dom.div {className: 'row'},
@@ -1184,6 +1191,7 @@ ISKPanel = React.createClass(
   displayName: 'ISKPanel'
   render: ->
     dom.div null,
+      dom.h3 null, 'ISK'
       dom.ul null,
         dom.li null, "#{numFmt(@props.stats.iskIn)} ISK earned total"
         dom.li null, "#{numFmt(@props.stats.iskOut)} ISK spent total"
@@ -1195,6 +1203,7 @@ MarketPanel = React.createClass(
   displayName: 'MarketPanel'
   render: ->
     dom.div null,
+      dom.h3 null, 'Markets and Contracts'
       dom.ul null,
         dom.li null, "#{numFmt(@props.stats.marketBuyOrdersPlaced)} buy orders placed"
         dom.li null, "#{numFmt(@props.stats.marketSellOrdersPlaced)} sell orders placed"
@@ -1499,8 +1508,6 @@ ShipHPChart = React.createClass(
     if @props.data.length == 0
       return
 
-    console.log 'ship hp chart'
-
     el = @getDOMNode()
 
     radius = 90
@@ -1634,4 +1641,4 @@ StatPanel = React.createClass(
           dom.h2 null, value
 )
 
-React.render(React.createElement(StatsUI), document.getElementById('stats'))
+React.render(React.createElement(StatsUI), document.getElementById('body'))
