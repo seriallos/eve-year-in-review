@@ -1,19 +1,12 @@
 
 # Ideas
-# * Damage represented by ship icon (relative EHP)
-#   * Silhoette icon, standard EHP on a PVP fit
+# * Silhoette icon, standard EHP on a PVP fit
 # * Stat per minute (any stat divided by active minutes)
-# AU breakdown (distance to different galaxies, amount of years at speed of light)
 
 # TODO
-# * Less intense H/L/N/W colors
-# * More/better raw stat formatters (minutes to H:M, etc)
 # * tick marks on HP Chart (shield armor hull half circle)
-# * Fix 1 column layout, test on phone/tablet
+# * test on phone/tablet
 # * Partial analogy icons (0.6 of an avatar)
-# * More ships, auto select ship that has a couple hundred kills
-# * Empty charts/tables, don't proper empty message
-# * Format numbers to 1M, 1B, 1T instead of lots of digits?
 
 # Data requests / questions
 # * Drone damage (also, are fighters drones?) (PC vs NPC)
