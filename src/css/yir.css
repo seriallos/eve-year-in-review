@@ -5,6 +5,11 @@
   padding: 0;
 }
 
+.yir-nav {
+  background-color: rgba(48, 48, 48, 0.9);
+  height: 10px;
+}
+
 .vert-center {
   min-height: 75%;  /* Fallback for browsers do NOT support vh unit */
   min-height: 75vh; /* These two lines are counted as one :-)       */

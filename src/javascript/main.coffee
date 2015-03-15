@@ -665,25 +665,31 @@ SSOLoginButton = React.createClass(
 
 Header = React.createClass(
   displayName: 'Header'
+  onYearClick: (year) ->
+    return (event) =>
+      @props.switchToYear year
   render: ->
     years = [ 2014, 2013 ]
-    dom.nav {className: 'navbar navbar-default navbar-fixed-top'},
+    yearLis = []
+    for year in years
+      yearLis.push dom.li(null, dom.a({key: year, onClick: @onYearClick(year)}, year))
+    yearDropdown = dom.li {className: 'dropdown'},
+              dom.a {className: 'dropdown-toggle', 'data-toggle': 'dropdown', role: 'button', 'aria-expanded': false}, "Year ", dom.span({className: 'caret'})
+              dom.ul {className: 'dropdown-menu', role: 'menu'},
+                yearLis
+
+    return dom.nav {className: 'navbar navbar-default navbar-fixed-bottom yir-nav'},
       dom.div {className: 'container'},
         dom.div {className: 'collapse navbar-collapse'},
-          dom.a {className: 'navbar-brand'}, React.createElement(CharacterAvatar, {id: @props.character.id, width: 32})
+          dom.a {className: 'navbar-brand'},
+            React.createElement(CharacterAvatar, {id: @props.character.id, width: 32})
+          dom.p {className: 'navbar-link navbar-text'}, @props.character.name, ', ', @props.year
           dom.ul {className: 'nav navbar-nav'},
             dom.li null,
-              dom.a null, "EVE: Year in Review"
-            dom.li {className: 'dropdown'},
-              dom.a {className: 'dropdown-toggle', 'data-toggle': 'dropdown', role: 'button', 'aria-expanded': false}, "Change Year", dom.span({className: 'caret'})
-              dom.ul {className: 'dropdown-menu', role: 'menu'},
-                dom.li null,
-                  dom.a null, 2014
-                dom.li null,
-                  dom.a null, 2013
+              yearDropdown unless @props.hideSwitch
           dom.ul {className: 'nav navbar-nav navbar-right'},
             dom.li null,
-              React.createElement(SSOLoginButton, {linkText: 'Switch Character/Account'})
+              React.createElement(SSOLoginButton, {linkText: 'Change Character'})
 )
 
 Title = React.createClass(
