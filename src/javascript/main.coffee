@@ -278,6 +278,20 @@ STYLES =
   jobInvention:
     icon: 'images/icons/UI/Industry/invention.png'
 
+
+  chat:
+    icon: 'images/icons/UI/WindowIcons/chatchannels.png'
+  mailSent:
+    icon: 'images/icons/UI/WindowIcons/evemail.png'
+  mailReceived:
+    icon: 'images/icons/UI/WindowIcons/evemail.png'
+  trades:
+    icon: 'images/icons/UI/WindowIcons/comparetool.png'
+  fleetJoins:
+    icon: 'images/icons/UI/WindowIcons/fleet.png'
+  fleetBroadcasts:
+    icon: 'images/icons/UI/WindowIcons/chatchannel.png'
+
 # alias styles
 STYLES.HighSec = STYLES.high
 STYLES.LowSec = STYLES.low
@@ -583,7 +597,9 @@ StatsUI = React.createClass(
           dom.div {className: 'col-md-6'}, contactsOtherPanel
 
         dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, socialMiscPanel
+          dom.div {className: 'col-md-12'}, socialMiscPanel
+
+        dom.div {className: 'row'}
           dom.div {className: 'col-md-6'}, miscStats
 
         # Misc
@@ -1578,15 +1594,42 @@ ContactsPanel = React.createClass(
 SocialMiscPanel = React.createClass(
   displayName: 'SocialMiscPanel'
   render: ->
-    dom.div {className: ''},
-      dom.h3 null, 'Social / Fleets'
-      dom.ul null,
-        dom.li null, "#{numFmt(@props.stats.socialChatTotalMessageLength)} characters written in chat"
-        dom.li null, "#{numFmt @props.stats.socialMailsSent} mails sent"
-        dom.li null, "#{numFmt @props.stats.socialMailsReceived} mails received"
-        dom.li null, "#{numFmt @props.stats.socialDirectTrades} direct trades made"
-        dom.li null, "#{numFmt @props.stats.socialFleetJoins} fleets joined"
-        dom.li null, "#{numFmt @props.stats.socialFleetBroadcasts} fleet broadcasts made"
+    if @props.stats
+      callouts = [
+        {
+          value: @props.stats.socialChatTotalMessageLength
+          description: 'Total Length of Chat (characters)'
+          icon: 'chat'
+        }
+        {
+          value: @props.stats.socialMailsSent
+          description: 'Mails Sent'
+          icon: 'mailSent'
+        }
+        {
+          value: @props.stats.socialMailsReceived
+          description: 'Mails Received'
+          icon: 'mailReceived'
+        }
+        {
+          value: @props.stats.socialDirectTrades
+          description: 'Direct Trades'
+          icon: 'trades'
+        }
+        {
+          value: @props.stats.socialFleetJoins
+          description: 'Fleets Joined'
+          icon: 'fleetJoins'
+        }
+        {
+          value: @props.stats.socialFleetBroadcasts
+          description: 'Fleets Broadcasts'
+          icon: 'fleetBroadcasts'
+        }
+      ]
+      return React.createElement(CalloutPanel, {title: 'Social / Fleets', callouts: callouts, columns: 3})
+    else
+      return null
 )
 
 MiscStats = React.createClass(
