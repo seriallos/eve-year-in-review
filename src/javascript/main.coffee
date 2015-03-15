@@ -53,12 +53,10 @@ React = require 'react'
 $ = require 'jquery'
 d3 = require 'd3'
 _ = require 'lodash'
+numeral = require 'numeral'
+
 qs = require 'querystring'
 urlParse = require('url').parse
-
-# polyfill for safari
-if not Intl
-  Intl = require 'intl'
 
 CharacterStats = require './character_stats'
 CharacterFacts = require './character_facts'
@@ -359,7 +357,10 @@ humanizeMinutes = (minutes) ->
   return out
 
 numFmt = (number) ->
-  return Intl.NumberFormat().format(number)
+  if number
+    return numeral(number).format('0,0')
+  else
+    return null
 
 StatsUI = React.createClass(
   displayName: 'CharacterStatsUI'
@@ -405,7 +406,7 @@ StatsUI = React.createClass(
           jrequest data.character.href, (err, data, xhr) =>
             char = @state.character
             char.name = data.name
-            @setState {character: char}
+            @setState {character: char, corp: char.corporation}
           @loadStatsYear(2014)
 
   loadStatsYear: (year) ->
@@ -432,6 +433,11 @@ StatsUI = React.createClass(
           name: 'Bellatroix'
           id: 1412571394
         }
+        corp: {
+          name: 'Folkvangr Acres'
+          logo:
+            '32x32': ''
+        }
       }
 
   render: ->
@@ -456,7 +462,18 @@ StatsUI = React.createClass(
       else
         facts = null
 
-      title = React.createElement(Title, {character: @state.character, year: @state.year, switchToYear: @loadStatsYear, hideSwitch: @state.sample})
+      title = React.createElement(Title, {
+        character: @state.character,
+        year: @state.year,
+        switchToYear: @loadStatsYear,
+        hideSwitch: @state.sample
+      })
+      header = React.createElement(Header, {
+        character: @state.character,
+        year: @state.year,
+        switchToYear: @loadStatsYear,
+        hideSwitch: @state.sample
+      })
 
       if @state.noData
         return dom.div {className: 'container translucent'},
@@ -469,7 +486,12 @@ StatsUI = React.createClass(
 
           dom.div null, "No data for #{@state.year}"
 
-      charInfoPanel = React.createElement(CharacterInfoPanel, {character: @state.character, facts: facts, stats: @state.stats})
+      charInfoPanel = React.createElement(CharacterInfoPanel, {
+        character: @state.character
+        corp: @state.corp
+        facts: facts
+        stats: @state.stats
+      })
 
       travelJumpsPanel = React.createElement(TravelJumpsPanel, {stats: @state.stats})
       travelDistancePanel = React.createElement(TravelDistancePanel, {stats: @state.stats})
@@ -535,90 +557,89 @@ StatsUI = React.createClass(
 
       rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
 
-      dom.div {className: 'container translucent'},
+      dom.div null,
+        # header
+        header
 
-        React.createElement(SSOLoginButton, {linkText: 'Switch Character/Account'})
+        # main content
+        dom.div {className: 'container translucent'},
 
-        title
+          header
 
-        charInfoPanel
+          charInfoPanel
 
-        # Residence / Distance
+          # Residence / Distance
 
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, travelJumpsPanel
-          dom.div {className: 'col-md-6'}, travelDistancePanel
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-6'}, travelJumpsPanel
+            dom.div {className: 'col-md-6'}, travelDistancePanel
 
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-12'}, distanceAnalogy
+          dom.div {className: 'row'},
+            dom.div {className: 'col-md-12'}, distanceAnalogy
 
-        # PVP
+          # PVP
 
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, killsPanel
-          dom.div {className: 'col-md-6'}, deathsPanel
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-6'}, killsPanel
+            dom.div {className: 'col-md-6'}, deathsPanel
 
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, weaponUsagePanel
-          dom.div {className: 'col-md-6'}, damageTakenPanel
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-6'}, weaponUsagePanel
+            dom.div {className: 'col-md-6'}, damageTakenPanel
 
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-12'}, damageAnalogy
+          dom.div {className: 'row'},
+            dom.div {className: 'col-md-12'}, damageAnalogy
 
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-3'}, pvpModulesUsage
-          dom.div {className: 'col-md-3'}, pvpModulesAgainst
-          dom.div {className: 'col-md-3'}, miscPvpStats
-          dom.div {className: 'col-md-3'}, miscTooPvpStats
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-3'}, pvpModulesUsage
+            dom.div {className: 'col-md-3'}, pvpModulesAgainst
+            dom.div {className: 'col-md-3'}, miscPvpStats
+            dom.div {className: 'col-md-3'}, miscTooPvpStats
 
-        # TODO: without spacer columns, things overlap for some reason.  fix that!
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-3'}, repsGivenPanel
-          dom.div {className: 'col-md-1'}, ''
-          dom.div {className: 'col-md-3'}, repsReceivedPanel
-          dom.div {className: 'col-md-1'}, ''
-          dom.div {className: 'col-md-3'}, selfRepPanel
+          # TODO: without spacer columns, things overlap for some reason.  fix that!
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-3'}, repsGivenPanel
+            dom.div {className: 'col-md-1'}, ''
+            dom.div {className: 'col-md-3'}, repsReceivedPanel
+            dom.div {className: 'col-md-1'}, ''
+            dom.div {className: 'col-md-3'}, selfRepPanel
 
-        # PVE Stats
+          # PVE Stats
 
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-12'}, miscModules
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-12'}, miscModules
 
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-12'}, pveStats
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-12'}, pveStats
 
-        # ISK / Markets
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, totalIskPanel
-          dom.div {className: 'col-md-6'}, marketIskPanel
+          # ISK / Markets
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-6'}, totalIskPanel
+            dom.div {className: 'col-md-6'}, marketIskPanel
 
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-12'}, marketPanel
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-12'}, marketPanel
 
-        # Industry
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, miningPanel
-          dom.div {className: 'col-md-6'}, industryJobs
+          # Industry
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-6'}, miningPanel
+            dom.div {className: 'col-md-6'}, industryJobs
 
-        # Mining
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-12'}, blueprints
+          # Mining
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-12'}, blueprints
 
 
-        # Social
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-6'}, contactsSelfPanel
-          dom.div {className: 'col-md-6'}, contactsOtherPanel
+          # Social
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-6'}, contactsSelfPanel
+            dom.div {className: 'col-md-6'}, contactsOtherPanel
 
-        dom.div {className: 'row'},
-          dom.div {className: 'col-md-12'}, socialMiscPanel
+          dom.div {className: 'row top-buffer'},
+            dom.div {className: 'col-md-12'}, socialMiscPanel
 
-        dom.div {className: 'row'}
-          dom.div {className: 'col-md-12'}, miscStats
-
-        # Misc
-
-        #rawStatsList
+          dom.div {className: 'row top-buffer'}
+            dom.div {className: 'col-md-12'}, miscStats
 )
 
 SSOLoginButton = React.createClass(
@@ -642,12 +663,34 @@ SSOLoginButton = React.createClass(
     return dom.a {href: ssoUrl}, content
 )
 
+Header = React.createClass(
+  displayName: 'Header'
+  render: ->
+    years = [ 2014, 2013 ]
+    dom.nav {className: 'navbar navbar-default navbar-fixed-top'},
+      dom.div {className: 'container'},
+        dom.div {className: 'collapse navbar-collapse'},
+          dom.a {className: 'navbar-brand'}, React.createElement(CharacterAvatar, {id: @props.character.id, width: 32})
+          dom.ul {className: 'nav navbar-nav'},
+            dom.li null,
+              dom.a null, "EVE: Year in Review"
+            dom.li {className: 'dropdown'},
+              dom.a {className: 'dropdown-toggle', 'data-toggle': 'dropdown', role: 'button', 'aria-expanded': false}, "Change Year", dom.span({className: 'caret'})
+              dom.ul {className: 'dropdown-menu', role: 'menu'},
+                dom.li null,
+                  dom.a null, 2014
+                dom.li null,
+                  dom.a null, 2013
+          dom.ul {className: 'nav navbar-nav navbar-right'},
+            dom.li null,
+              React.createElement(SSOLoginButton, {linkText: 'Switch Character/Account'})
+)
+
 Title = React.createClass(
   displayName: 'Title'
   switchYear: ->
     return if @props.year == 2014 then 2013 else 2014
   onClick: ->
-    console.log "Switching to", @switchYear()
     this.props.switchToYear(@switchYear())
   render: ->
     dom.h2 null,
@@ -660,13 +703,30 @@ CharacterInfoPanel = React.createClass(
   render: ->
     avgSession = Math.round(@props.stats.characterMinutes / @props.stats.characterSessionsStarted)
     dom.div {className: 'row'},
-      dom.div {className: 'col-md-4'},
+      dom.div {className: 'col-md-3'},
         React.createElement(CharacterAvatar, {id: @props.character.id})
-      dom.div {className: 'col-md-8'},
-        React.createElement CalloutStat, {value: @props.stats.characterMinutes, description: 'Time Played', formatter: humanizeMinutes}
-        React.createElement CalloutStat, {value: @props.stats.daysOfActivity, description: 'Active Days'}
-        React.createElement CalloutStat, {value: @props.stats.characterSessionsStarted, description: 'Logins'}
-        React.createElement CalloutStat, {value: avgSession, description: 'Average Session Length', formatter: humanizeMinutes}
+      dom.div {className: 'col-md-9'},
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-8'},
+            React.createElement CalloutStat, {
+              value: @props.stats.characterMinutes,
+              description: 'Time Played',
+              formatter: humanizeMinutes
+            }
+            React.createElement CalloutStat, {
+              value: avgSession,
+              description: 'Average Session Length',
+              formatter: humanizeMinutes
+            }
+          dom.div {className: 'col-md-4'},
+            React.createElement CalloutStat, {
+              value: @props.stats.characterSessionsStarted,
+              description: 'Logins'
+            }
+            React.createElement CalloutStat, {
+              value: @props.stats.daysOfActivity,
+              description: 'Active Days'
+            }
 )
 
 CharacterAvatar = React.createClass(
@@ -674,11 +734,15 @@ CharacterAvatar = React.createClass(
   getDefaultProps: ->
     return {
       id: null
-      width: 256
+      width: 200
     }
   render: ->
-    url = "https://image.eveonline.com/Character/#{@props.id}_#{@props.width}.jpg"
-    dom.img {src: url, width: @props.width, height: @props.width, style: {boxShadow: '0 0 30px black'}}
+    url = "https://image.eveonline.com/Character/#{@props.id}_256.jpg"
+    dom.img {
+      src: url,
+      width: @props.width,
+      height: @props.width,
+    }
 )
 
 CalloutStat = React.createClass(
