@@ -292,6 +292,27 @@ STYLES =
   fleetBroadcasts:
     icon: 'images/icons/UI/WindowIcons/chatchannel.png'
 
+  dscan:
+    icon: 'images/dscan.png'
+  probeScan:
+    icon: 'images/probescan.png'
+  warpCelestial:
+    icon: 'images/warpto.png'
+  warpBookmark:
+    icon: 'images/warpBookmark.png'
+  warpFleetmate:
+    icon: 'images/warpFleetmate.png'
+  warpScanResult:
+    icon: 'images/warpto.png'
+  aligns:
+    icon: 'images/align.png'
+  accelGate:
+    icon: 'images/accelGate.png'
+  selfDestruct:
+    icon: 'images/icons/UI/WindowIcons/terminate.png'
+  trash:
+    icon: 'images/icons/UI/WindowIcons/Reprocess.png'
+
 # alias styles
 STYLES.HighSec = STYLES.high
 STYLES.LowSec = STYLES.low
@@ -600,7 +621,7 @@ StatsUI = React.createClass(
           dom.div {className: 'col-md-12'}, socialMiscPanel
 
         dom.div {className: 'row'}
-          dom.div {className: 'col-md-6'}, miscStats
+          dom.div {className: 'col-md-12'}, miscStats
 
         # Misc
 
@@ -966,24 +987,37 @@ DamageAnalogyPanel = React.createClass(
       id: 29988
       ehp: 150000
       fit: 'https://o.smium.org/loadout/private/23324/6303219387142766592'
-    # avatar:
-    #   pluralName: 'Avatars'
-    #   id: 11567
-    #   ehp: 22600000
-    #   fit: 'https://o.smium.org/loadout/private/23322/7459269642280763392'
+    naglfar:
+      pluralName: 'Naglfars'
+      id: 19722
+      ehp: 1500000
+      fit: 'https://o.smium.org/loadout/private/24661/3437198039918313472'
+    avatar:
+      pluralName: 'Avatars'
+      id: 11567
+      ehp: 22600000
+      fit: 'https://o.smium.org/loadout/private/23322/7459269642280763392'
   render: ->
     if @props.damage == 0
       return null
     else
-      ship = _.sample @ships
-      numShips = d3.round(@props.damage / ship.ehp, 1)
+      shipToUse = null
+      numShips = 0
+      for name, ship of @ships
+        shipToUse = name
+        numShips = d3.round(@props.damage / ship.ehp, 1)
+        if numShips < 100
+          break
+
+      ship = @ships[shipToUse]
       stamps = []
       for i in [0...Math.floor(numShips)]
         stamps.push dom.img {key: i, src: eveIconUrl(ship.id), width: 32, height: 32, className: 'stamp pull-left'}
 
       return dom.div {className: 'row'},
         dom.h4 {className: 'pull-left'},
-          dom.em null,"You have dealt enough damage to kill #{numShips} "
+          dom.em null,
+            "You have dealt enough damage to kill #{numShips} "
             dom.a {href: ship.fit}, ship.pluralName
         dom.div {className: 'clearfix'}, ''
         dom.div {className: ''}, stamps
@@ -1602,6 +1636,11 @@ SocialMiscPanel = React.createClass(
           icon: 'chat'
         }
         {
+          value: @props.stats.socialDirectTrades
+          description: 'Direct Trades'
+          icon: 'trades'
+        }
+        {
           value: @props.stats.socialMailsSent
           description: 'Mails Sent'
           icon: 'mailSent'
@@ -1610,11 +1649,6 @@ SocialMiscPanel = React.createClass(
           value: @props.stats.socialMailsReceived
           description: 'Mails Received'
           icon: 'mailReceived'
-        }
-        {
-          value: @props.stats.socialDirectTrades
-          description: 'Direct Trades'
-          icon: 'trades'
         }
         {
           value: @props.stats.socialFleetJoins
@@ -1635,19 +1669,62 @@ SocialMiscPanel = React.createClass(
 MiscStats = React.createClass(
   displayName: 'MiscStats'
   render: ->
-    dom.div {className: ''},
-      dom.h3 null, 'The Rest!'
-      dom.ul null,
-        dom.li null, "#{numFmt @props.stats.genericConeScans} Directional Scans"
-        dom.li null, "#{numFmt @props.stats.genericRequestScans} Probe Scans"
-        dom.li null, "#{numFmt @props.stats.travelWarpsToCelestial} warps to celestial"
-        dom.li null, "#{numFmt @props.stats.travelWarpsToBookmark} warps to bookmark"
-        dom.li null, "#{numFmt @props.stats.travelWarpsToFleetMember} warps to fleet member"
-        dom.li null, "#{numFmt @props.stats.travelWarpsToScanResult} warps to scan result"
-        dom.li null, "#{numFmt @props.stats.travelAlignTo} aligns"
-        dom.li null, "#{numFmt @props.stats.travelAccelerationGateActivations} acceleration gate activations"
-        dom.li null, "#{numFmt @props.stats.combatSelfDestructs} self destructs"
-        dom.li null, "#{numFmt @props.stats.inventoryTrashItemQuantity} items trashed"
+    if @props.stats
+      callouts = [
+        {
+          value: @props.stats.genericConeScans
+          description: 'Directional Scans'
+          icon: 'dscan'
+        }
+        {
+          value: @props.stats.genericRequestScans
+          description: 'Probe Scans'
+          icon: 'probeScan'
+        }
+        {
+          value: @props.stats.travelWarpsToCelestial
+          description: 'Warps to Celestial'
+          icon: 'warpCelestial'
+        }
+        {
+          value: @props.stats.travelWarpsToBookmark
+          description: 'Warps to Bookmark'
+          icon: 'warpBookmark'
+        }
+        {
+          value: @props.stats.travelWarpsToFleetMember
+          description: 'Warps to Fleet Member'
+          icon: 'warpFleetmate'
+        }
+        {
+          value: @props.stats.travelWarpsToScanResult
+          description: 'Warps to Scan Result'
+          icon: 'warpScanResult'
+        }
+        {
+          value: @props.stats.travelAlignTo
+          description: 'Aligns'
+          icon: 'aligns'
+        }
+        {
+          value: @props.stats.travelAccelerationGateActivations
+          description: 'Activated Acceleration Gate'
+          icon: 'accelGate'
+        }
+        {
+          value: @props.stats.combatSelfDestructs
+          description: 'Self Destructs'
+          icon: 'selfDestruct'
+        }
+        {
+          value: @props.stats.inventoryTrashItemQuantity
+          description: 'Items Trashed'
+          icon: 'trash'
+        }
+      ]
+      return React.createElement(CalloutPanel, {title: 'The Rest', callouts: callouts, columns: 4})
+    else
+      null
 )
 
 PieDataPanel = React.createClass(
@@ -1705,7 +1782,7 @@ PieDataTable = React.createClass(
       showColor: true
     }
   render: ->
-    colors = d3.scale.category20()
+    colors = d3.scale.category20b()
     rows = _.map @props.data, (d) =>
       if d.value == 0 and not @props.showZero
         return null
@@ -1837,7 +1914,7 @@ PieChart = React.createClass(
     if @props.total == 0
       return
 
-    color = d3.scale.category20()
+    color = d3.scale.category20b()
 
     outerRadius = @props.width / 2
 
@@ -1897,8 +1974,8 @@ ShipHPChart = React.createClass(
       return
 
     radius = 90
-    arcWidth = 7
-    padding = 1
+    arcWidth = 10
+    padding = 2
 
     getOffset = (i) ->
       return radius - (i * (arcWidth + padding))
@@ -1929,7 +2006,7 @@ ShipHPChart = React.createClass(
               .attr 'transform', "translate(#{radius},#{radius})"
 
     arcs.append 'path'
-        .attr 'fill', 'red'
+        .attr 'fill',STYLES.null.color
         .attr 'd', hullArc
 
     arcs.append 'path'
