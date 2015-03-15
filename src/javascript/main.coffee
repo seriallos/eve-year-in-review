@@ -970,26 +970,68 @@ DamageAnalogyPanel = React.createClass(
       id: 32880
       ehp: 3770
       fit: 'https://o.smium.org/loadout/private/24585/6674104450400911360'
-    caracal:
-      pluralName: 'Caracals'
-      id: 621
-      ehp: 18000
-      fit: 'https://o.smium.org/loadout/private/24584/5861380819909607424'
-    proteus:
-      pluralName: 'Proteii'
-      id: 29988
-      ehp: 150000
-      fit: 'https://o.smium.org/loadout/private/23324/6303219387142766592'
+      image: 'images/ships/venture.png'
+      width: 43
+      height: 48
+    #caracal:
+    #  pluralName: 'Caracals'
+    #  id: 621
+    #  ehp: 18000
+    #  fit: 'https://o.smium.org/loadout/private/24584/5861380819909607424'
+    #  image: 'images/ships/caracal.png'
+    #  height: 32
+    vexor:
+      pluralName: 'Vexors'
+      ehp: 24000
+      fit: 'https://o.smium.org/loadout/private/24682/7359747123954319360'
+      image: 'images/ships/vexor.png'
+      width: 57
+      height: 48
+    #proteus:
+    #  pluralName: 'Proteii'
+    #  id: 29988
+    #  ehp: 150000
+    #  fit: 'https://o.smium.org/loadout/private/23324/6303219387142766592'
+    #  image: 'images/ships/proteus.png'
+    #  height: 32
+    #abaddon:
+    #  pluralName: 'Abaddons'
+    #  ehp: 140000
+    #  fit: ''
+    #  image: 'images/ships/abaddon.png'
+    #  height: 32
+    #  width: 90
+    apocalypse:
+      pluralName: 'Apocalypses Navy Issue'
+      ehp: 140000
+      fit: 'https://o.smium.org/loadout/private/24684/6057995995994652672'
+      image: 'images/ships/apocalypse.png'
+      height: 32
+      width: 92
+    #legion:
+    #  pluralName: 'Legions'
+    #  ehp: 140000
+    #  fit: 'https://o.smium.org/loadout/private/24683/477339014555238400'
+    #  image: 'images/ships/legion.png'
+    #  height: 32
     naglfar:
       pluralName: 'Naglfars'
       id: 19722
       ehp: 1500000
       fit: 'https://o.smium.org/loadout/private/24661/3437198039918313472'
+      image: 'images/ships/naglfar.png'
+      width: 32
+      height: 113
     avatar:
       pluralName: 'Avatars'
       id: 11567
       ehp: 22600000
       fit: 'https://o.smium.org/loadout/private/23322/7459269642280763392'
+      image: 'images/ships/avatar.png'
+      width: 96
+      height: 48
+  numShips: (shipKey) ->
+    return d3.round(@props.damage / @ships[shipKey].ehp, 1)
   render: ->
     if @props.damage == 0
       return null
@@ -998,14 +1040,28 @@ DamageAnalogyPanel = React.createClass(
       numShips = 0
       for name, ship of @ships
         shipToUse = name
-        numShips = d3.round(@props.damage / ship.ehp, 1)
+        numShips = @numShips(name)
         if numShips < 100
           break
 
       ship = @ships[shipToUse]
+      numShips = @numShips(shipToUse)
+      wholeShips = Math.floor(numShips)
+      partial = numShips - wholeShips
       stamps = []
+      imgOpts = {src: ship.image, width: ship.width, height: ship.height, className: 'stamp'}
       for i in [0...Math.floor(numShips)]
-        stamps.push dom.img {key: i, src: eveIconUrl(ship.id), width: 32, height: 32, className: 'stamp pull-left'}
+        stamps.push dom.div({className: 'pull-left'}, dom.img(imgOpts))
+      # handle partial stamp by hiding overflow and explicitly setting width
+      if partial
+        width = Math.round(partial * ship.width)
+        divOpts =
+          className: 'pull-left'
+          style:
+            height: ship.height
+            width: width
+            overflow: 'hidden'
+        stamps.push dom.div(divOpts, dom.img(imgOpts))
 
       return dom.div {className: 'row'},
         dom.h4 {className: 'pull-left'},
