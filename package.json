@@ -9,10 +9,17 @@
   "browser": {},
   "browserify": {
     "transform": [
-      "coffeeify"
+      "coffeeify",
+      "browserify-shim"
     ]
   },
-  "browserify-shim": {},
+  "browserify-shim": {
+    "jquery": "global:jQuery",
+    "d3": "global:d3",
+    "react": "global:React",
+    "lodash": "global:_",
+    "numeral": "global:numeral"
+  },
   "devDependencies": {
     "browser-sync": "~1.3.6",
     "browserify": "^9.0.3",
@@ -49,9 +56,6 @@
   },
   "dependencies": {
     "intl": "^0.1.4",
-    "jquery": "^2.1.3",
-    "lodash": "^3.3.1",
-    "react": "^0.12.2",
     "request": "^2.53.0"
   }
 }

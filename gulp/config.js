@@ -51,9 +51,8 @@ module.exports = {
       dest: dest,
       outputName: 'main.js',
       // Additional file extentions to make optional
-      extensions: ['.coffee'],
+      extensions: ['.coffee']
       // list of modules to make require-able externally
-      require: []
     }]
   },
   production: {

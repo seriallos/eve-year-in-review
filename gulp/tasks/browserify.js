@@ -30,7 +30,7 @@ var browserifyTask = function(callback, devMode) {
       // A watchify require/external bug that prevents proper recompiling,
       // so (for now) we'll ignore these options during development. Running
       // `gulp browserify` directly will properly require and externalize.
-      bundleConfig = _.omit(bundleConfig, ['external', 'require']);
+      //bundleConfig = _.omit(bundleConfig, ['external', 'require']);
     }
 
     var b = browserify(bundleConfig);
