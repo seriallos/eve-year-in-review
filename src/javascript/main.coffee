@@ -206,7 +206,7 @@ StatsUI = React.createClass(
 
       dom.div {className: 'vert-center'},
         dom.div {className: 'text-center translucent'},
-          dom.h2 null, "No data for #{@state.year}"
+          dom.h2 null, "Looks like you won EVE in #{@state.year}.  No data available."
 
   renderStats: (header) ->
     charInfoPanel = React.createElement(
