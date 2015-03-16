@@ -1,26 +1,4 @@
 
-# Ideas
-# * Silhoette icon, standard EHP on a PVP fit
-# * Stat per minute (any stat divided by active minutes)
-
-# TODO
-# * tick marks on HP Chart (shield armor hull half circle)
-# * test on phone/tablet
-# * Partial analogy icons (0.6 of an avatar)
-
-# Data requests / questions
-# * Drone damage (also, are fighters drones?) (PC vs NPC)
-# * PVE
-#   * Incursions?
-#   * Rat kills
-#   * DED/explo plexes
-#   * ECM/Damp/TP/Vamp - PC vs NPC?
-# * Pods contained in the kill data or separate?
-# * Self cap boosting (to supplement cap transfers)
-# * Wormhole docking (Thera)
-# * PI Stats?
-# * Industry stats - number of runs, not quantity of output (charges throw off the stats)
-
 env = 'dev'
 
 CONFIG =
@@ -39,8 +17,6 @@ CONFIG =
     sso_client_id: '67a0cc0f68d34e77b9751f8c75dd2e31'
     crest_host: 'https://crest-tq.eveonline.com'
 
-# TODO: hash of client IDs and callback URLs, match to current domain
-
 client = CONFIG[env].clients[window.location.host]
 
 SSO_PROTO = 'https'
@@ -50,8 +26,8 @@ SSO_CLIENT_ID = client?.sso_client_id
 CREST_HOST = CONFIG[env].crest_host
 
 React = require 'react'
-$ = require 'jquery'
 d3 = require 'd3'
+$ = require 'jquery'
 _ = require 'lodash'
 numeral = require 'numeral'
 
@@ -63,8 +39,6 @@ CharacterFacts = require './character_facts'
 
 dom = React.DOM
 
-# sources of sampled colors
-#   * subcap weapons: http://i.imgur.com/c08RJ.jpg
 STYLES =
   hybrid:
     label: 'Hybrid'
@@ -356,11 +330,11 @@ humanizeMinutes = (minutes) ->
 
   return out
 
-numFmt = (number) ->
-  if number
-    return numeral(number).format('0,0')
-  else
-    return null
+humanizeNumber = (number) ->
+  return numeral(number).format('0,0')
+
+# default formatter is add commas
+numFmt = humanizeNumber
 
 StatsUI = React.createClass(
   displayName: 'CharacterStatsUI'
@@ -450,7 +424,9 @@ StatsUI = React.createClass(
           dom.div {className: 'noAccountText'}, "Don't want to commit just yet? "
           dom.div null, dom.a({className: 'pointer', onClick: @loadSampleData}, 'Take a look at my stats.')
           #dom.div {className: 'techDetails'}, "This app requires JavaScript and utilizes EVE's Single Sign On technology.  Your data is only transferred to your browser and never stored on the server.  Basic usage analytics will be collected."
-          dom.div {className: 'broughtToYou'}, "Brought to you by Bellatroix (", dom.a({href:'https://twitter.com/sollaires'}, '@sollaires'), "), designed by ", dom.a({href:'https://twitter.com/baletsa'}, '@baletsa')
+          dom.div {className: 'broughtToYou'}, "Brought to you by Bellatroix (", dom.a({href:'https://twitter.com/sollaires'}, '@sollaires'), ")"
+          dom.div {className: 'techNotes'}, "Technical details and code available on ",
+            dom.a {href: 'https://github.com/seriallos/eve-year-in-review'}, 'Github'
     else if @state.ssoState == 'loading'
       return dom.div {className: 'vert-center'}, "Verifying SSO token and loading your stats..."
     else if not @state.stats and not @state.noData
@@ -476,15 +452,12 @@ StatsUI = React.createClass(
       })
 
       if @state.noData
-        return dom.div {className: 'container translucent'},
+        return dom.div null,
 
-          React.createElement(SSOLoginButton, {linkText: 'Switch Character/Account'})
+          header
 
-          title
-
-          charInfoPanel
-
-          dom.div null, "No data for #{@state.year}"
+          dom.div {className: 'container translucent'},
+            dom.div null, "No data for #{@state.year}"
 
       charInfoPanel = React.createElement(CharacterInfoPanel, {
         character: @state.character
@@ -546,6 +519,10 @@ StatsUI = React.createClass(
       totalIskPanel = React.createElement(TotalISKPanel, {stats: @state.stats, max: max})
       marketIskPanel = React.createElement(MarketISKPanel, {stats: @state.stats, max: max})
 
+      iskPerHour = @state.stats.perHour 'iskIn'
+      iskPerHourPull = dom.h4 {className: 'pull-left'},
+        dom.em null, "Your earned #{humanizeLargeNum iskPerHour} ISK per hour."
+
       marketPanel = React.createElement(MarketPanel, {stats: @state.stats})
 
       contactsSelfPanel = React.createElement(ContactsPanel, {context: 'self', stats: @state.stats})
@@ -553,9 +530,15 @@ StatsUI = React.createClass(
 
       socialMiscPanel = React.createElement(SocialMiscPanel, {stats: @state.stats})
 
+      chatAnalogy = React.createElement(ChatAnalogyPanel, {chars: @state.stats.socialChatTotalMessageLength})
+
       miscStats = React.createElement(MiscStats, {stats: @state.stats})
 
-      rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
+      dscanPerHour = 60 * (@state.stats.genericConeScans / @state.stats.characterMinutes)
+      dscanRate = dom.h4 {className: 'pull-right'},
+        dom.em null, "You d-scan #{numFmt dscanPerHour} times per hour"
+
+      #rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
 
       dom.div null,
         # header
@@ -617,6 +600,9 @@ StatsUI = React.createClass(
             dom.div {className: 'col-md-6'}, totalIskPanel
             dom.div {className: 'col-md-6'}, marketIskPanel
 
+          dom.div {className: 'row'},
+            dom.div {className: 'col-md-12'}, iskPerHourPull
+
           dom.div {className: 'row top-buffer'},
             dom.div {className: 'col-md-12'}, marketPanel
 
@@ -638,8 +624,14 @@ StatsUI = React.createClass(
           dom.div {className: 'row top-buffer'},
             dom.div {className: 'col-md-12'}, socialMiscPanel
 
+          dom.div {className: 'row'},
+            dom.div {className: 'col-md-12'}, chatAnalogy
+
           dom.div {className: 'row top-buffer'}
             dom.div {className: 'col-md-12'}, miscStats
+
+          dom.div {className: 'row top-buffer'}
+            dom.div {className: 'col-md-12'}, dscanRate
 )
 
 SSOLoginButton = React.createClass(
@@ -707,6 +699,8 @@ Title = React.createClass(
 CharacterInfoPanel = React.createClass(
   displayName: 'CharacterInfoPanel'
   render: ->
+    thisIsEveLength = 3 + (42 / 60)
+    timesWatched = Math.floor(@props.stats.characterMinutes / thisIsEveLength)
     avgSession = Math.round(@props.stats.characterMinutes / @props.stats.characterSessionsStarted)
     dom.div {className: 'row'},
       dom.div {className: 'col-md-3'},
@@ -733,6 +727,12 @@ CharacterInfoPanel = React.createClass(
               value: @props.stats.daysOfActivity,
               description: 'Active Days'
             }
+        dom.div {className: 'row'},
+          dom.h4 {className: 'pull-left'},
+            dom.em null,
+              "You could have watched "
+              dom.a {href: 'https://www.youtube.com/watch?v=AdfFnTt2UT0'}, "This is EVE"
+              " #{numFmt timesWatched} times instead of playing."
 )
 
 CharacterAvatar = React.createClass(
@@ -837,30 +837,30 @@ DistanceAnalogyPanel = React.createClass(
   displayName: 'DistanceAnalogyPanel'
   # in meters per second
   vehicles:
-    light:
-      name: 'The speed of light'
-      speed: 299792458
-    voyagerOne:
-      name: 'Voyager 1'
-      speed: 17260.2
-    mph60:
-      name: 'A car travelling at 60 MPH'
-      speed: 26.8224
-    concord:
-      name: 'The Concorde'
-      speed: 605.292
+    # light:
+    #   name: 'The speed of light'
+    #   speed: 299792458
     walker:
       name: 'Walking on foot'
       speed: 1.4
     cyclist:
       name: 'Riding a bicycle'
       speed: 6.5
+    mph60:
+      name: 'A car travelling at 60 MPH'
+      speed: 26.8224
     ferrari:
       name: 'A Ferrari F50 GT1'
       speed: 105.5
+    concord:
+      name: 'The Concorde'
+      speed: 605.292
     iss:
       name: 'The International Space Station orbiting the Earth'
       speed: 7700
+    voyagerOne:
+      name: 'Voyager 1'
+      speed: 17260.2
 
   render: ->
     if @props.distance > 0
@@ -904,7 +904,7 @@ KillsPanel = React.createClass(
         ' '
         dom.small null, 'Player Ships'
       React.createElement(BarChart, {data: @chartData(), max: @props.max})
-      dom.div null, "Popped #{numFmt @props.stats?.combatKillsPodTotal} pods, assisted on #{numFmt @props.stats?.combatKillsAssists} killmails"
+      dom.div null, "Assisted on #{numFmt @props.stats?.combatKillsAssists} ship killmails, popped #{numFmt @props.stats?.combatKillsPodTotal} pods."
 )
 
 DeathsPanel = React.createClass(
@@ -1622,9 +1622,8 @@ TotalISKPanel = React.createClass(
         ' '
         dom.small null, 'All Sources'
       React.createElement(BarChart, {data: @chartData(), margin: margin, max: @props.max, formatter: humanizeLargeNum})
-      dom.div null, "Average ISK/hour earned: #{humanizeLargeNum iskPerHour}"
-      dom.div null, "Average ISK/hour spent: #{humanizeLargeNum iskSpentPerHour}"
 )
+
 
 MarketISKPanel = React.createClass(
   displayName: 'MarketISKPanel'
@@ -1740,7 +1739,8 @@ ContactsPanel = React.createClass(
     dom.div {className: ''},
       dom.h3 null,
         title
-      React.createElement(PieDataPanel, {data: data, showZero: true})
+      # override sort with a function that doesn't change order
+      React.createElement(PieDataPanel, {data: data, showZero: true, sort: (a, b) -> 0})
 
 )
 
@@ -1781,6 +1781,41 @@ SocialMiscPanel = React.createClass(
         }
       ]
       return React.createElement(CalloutPanel, {title: 'Social / Fleets', callouts: callouts, columns: 3})
+    else
+      return null
+)
+
+ChatAnalogyPanel = React.createClass(
+  displayName: 'ChatAnalogyPanel'
+  # in number of characters
+  charsPerWord: 6
+  books:
+    greeneggs:
+      name: 'Green Eggs and Ham'
+      words: 812
+    modestproposal:
+      name: 'A Modest Proposal'
+      words: 3147
+    theprince:
+      name: 'Machiavelli\'s Il Principe'
+      words: 32174
+    bravenewworld:
+      name: 'Brave New World'
+      words: 63766
+    mobydick:
+      name: 'Crime and Punishment'
+      words: 211591
+      link: 'http://www.gutenberg.org/files/2701/2701.txt'
+    atlasshrugged:
+      name: 'Atlas Shrugged'
+      words: 561996
+
+  render: ->
+    if @props.chars > 0
+      book = _.sample @books
+      numCopies = d3.round((@props.chars / @charsPerWord) / book.words, 2)
+      chatText = "Your total chat is roughly the same length as #{numCopies} copies of #{book.name}"
+      return dom.h4 {className: 'pull-left'}, dom.em(null,chatText)
     else
       return null
 )
@@ -1853,6 +1888,7 @@ PieDataPanel = React.createClass(
       chartType: 'pie'
       layout: 'horizontal'
       showZero: false
+      sort: null
     }
   deriveData: (sortFn) ->
     tmp = _.clone @props.data
@@ -1875,6 +1911,8 @@ PieDataPanel = React.createClass(
         chartElementType = ShipHPChart
         sortFn = (a, b) -> return HP_BAR_ORDER.indexOf(a.key) - HP_BAR_ORDER.indexOf(b.key)
         showColor = false
+    if @props.sort
+      sortFn = @props.sort
     data = @deriveData(sortFn)
 
     if @total == 0
