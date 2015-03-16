@@ -898,7 +898,7 @@ DamageAnalogyPanel = React.createClass(
       width: 96
       height: 48
   numShips: (shipKey) ->
-    return d3.round(@props.damage / @ships[shipKey].ehp, 1)
+    return d3.round(@props.damage / @ships[shipKey].ehp, 2)
   getInitialState: ->
     return {
       ship: null
@@ -949,7 +949,7 @@ DamageAnalogyPanel = React.createClass(
         stamps.push dom.div(divOpts, dom.img(imgOpts))
 
       return dom.div {className: 'row'},
-        dom.div {className: 'dropdown pull-left'},
+        dom.div {className: 'dropdown'},
           dom.button {
             id: 'shipDropdown'
             className: 'btn btn-xs btn-default dropdown-toggle'
