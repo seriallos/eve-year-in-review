@@ -35,254 +35,10 @@ qs = require 'querystring'
 urlParse = require('url').parse
 
 CharacterStats = require './character_stats'
-CharacterFacts = require './character_facts'
 
 dom = React.DOM
 
-STYLES =
-  hybrid:
-    label: 'Hybrid'
-    color: '#4E815F'
-    iconId: 238
-  missile:
-    label: 'Missile'
-    color: '#5379AB'
-    iconId: 203
-  projectile:
-    label: 'Projectile'
-    color: '#B4633C'
-    iconId: 201
-  laser:
-    label: 'Laser'
-    color: '#A69A31'
-    iconId: 262
-  bomb:
-    label: 'Bomb'
-    color: 'red'
-    iconId: 27920
-  smartbomb:
-    label: 'Smart Bomb'
-    color: 'purple'
-    iconId: 3993
-  fighter:
-    label: 'Fighter Bomber'
-    color: 'orange'
-    iconId: 1
-  dd:
-    label: 'Doomsday'
-    color: '#666'
-    iconId: 24550
-  shield:
-    label: 'Shield'
-    color: 'white'
-    iconId: 10838
-
-  web:
-    label: 'Stasis Webifier'
-    iconId: 526
-  scram:
-    label: 'Warp Scrambler'
-    iconId: 3242
-  neut:
-    label: 'Energy Neutralizer'
-    iconId: 12269
-  armor:
-    label: 'Armor'
-    color: 'white'
-    iconId: 3538
-  hull:
-    label: 'Hull'
-    color: 'white'
-    iconId: 3663
-
-  pvpFlag:
-    icon: 'images/pvpFlag.png'
-  criminalFlag:
-    icon: 'images/criminalFlag.png'
-  duel:
-    icon: 'images/duel.png'
-  overheat:
-    icon: 'images/overheat.png'
-
-  cyno:
-    iconId: 21096
-  cloak:
-    iconId: 11370
-  gangLink:
-    iconId: 20070
-  damp:
-    iconId: 1968
-  ecm:
-    iconId: 1957
-  painter:
-    iconId: 12709
-  nos:
-    iconId: 12261
-
-  high:
-    label: 'High Sec'
-    color: '#579C48'
-  low:
-    label: 'Low Sec'
-    color: '#C0AD23'
-  null:
-    label: 'Null Sec'
-    color: '#8F1024'
-  wormhole:
-    label: 'Wormholes'
-    color: '#476F99'
-
-  charge:
-    label: 'Charges'
-  commodity:
-    label: 'Commodity'
-  deployable:
-    label: 'Deployable'
-  drone:
-    label: 'Drone'
-  implant:
-    label: 'Implant'
-  module:
-    label: 'Module'
-  ship:
-    label: 'Ship'
-  structure:
-    label: 'Structure'
-  subsystem:
-    label: 'Subsystem'
-
-  arkonor:
-    label: 'Arkonor'
-    iconId: 22
-  bistot:
-    label: 'Bistot'
-    iconId: 1223
-  crokite:
-    label: 'Crokite'
-    iconId: 1225
-  darkochre:
-    label: 'Dark Ochre'
-    iconId: 1232
-  gneiss:
-    label: 'Gneiss'
-    iconId: 1229
-  gas:
-    label: 'Harvestable Cloud'
-    iconId: 30372
-  hedbergite:
-    label: 'Hedbergite'
-    iconId: 21
-  hemoprphite:
-    label: 'Hemorphite'
-    iconId: 1231
-  ice:
-    label: 'Ice'
-    iconId: 16264
-  jaspet:
-    label: 'Jaspet'
-    iconId: 1226
-  kernite:
-    label: 'Kernite'
-    iconId: 20
-  mercoxit:
-    label: 'Mercoxit'
-    iconId: 11396
-  omber:
-    label: 'Omber'
-    iconId: 1227
-  plagioclase:
-    label: 'Plagioclase'
-    iconId: 18
-  pyroxeres:
-    label: 'Pyroxeres'
-    iconId: 1224
-  scordite:
-    label: 'Scordite'
-    iconId: 1228
-  spodumain:
-    label: 'Spodumain'
-    iconId: 19
-  veldspar:
-    label: 'Veldspar'
-    iconId: 1230
-
-  great:
-    label: 'Excellent'
-    color: '#0C2174'
-    icon: 'images/standingsExcellent.png'
-  good:
-    label: 'Good'
-    color: '#3E5FBF'
-    icon: 'images/standingsGood.png'
-  neutral:
-    label: 'Neutral'
-    color: '#868786'
-    icon: 'images/standingsNeutral.png'
-  bad:
-    label: 'Bad'
-    color: '#A94700'
-    icon: 'images/standingsBad.png'
-  horrible:
-    label: 'Terrible'
-    color: '#7C0000'
-    icon: 'images/standingsTerrible.png'
-
-  iskIn:
-    label: 'Earned'
-    color: '#579C48'
-  iskOut:
-    label: 'Spent'
-    color: '#8F1024'
-
-  jobCopy:
-    icon: 'images/icons/UI/Industry/copying.png'
-  jobMe:
-    icon: 'images/icons/UI/Industry/researchMaterial.png'
-  jobTe:
-    icon: 'images/icons/UI/Industry/researchTime.png'
-  jobInvention:
-    icon: 'images/icons/UI/Industry/invention.png'
-
-
-  chat:
-    icon: 'images/icons/UI/WindowIcons/chatchannels.png'
-  mailSent:
-    icon: 'images/icons/UI/WindowIcons/evemail.png'
-  mailReceived:
-    icon: 'images/icons/UI/WindowIcons/evemail.png'
-  trades:
-    icon: 'images/icons/UI/WindowIcons/comparetool.png'
-  fleetJoins:
-    icon: 'images/icons/UI/WindowIcons/fleet.png'
-  fleetBroadcasts:
-    icon: 'images/icons/UI/WindowIcons/chatchannel.png'
-
-  dscan:
-    icon: 'images/dscan.png'
-  probeScan:
-    icon: 'images/probescan.png'
-  warpCelestial:
-    icon: 'images/warpto.png'
-  warpBookmark:
-    icon: 'images/warpBookmark.png'
-  warpFleetmate:
-    icon: 'images/warpFleetmate.png'
-  warpScanResult:
-    icon: 'images/warpto.png'
-  aligns:
-    icon: 'images/align.png'
-  accelGate:
-    icon: 'images/accelGate.png'
-  selfDestruct:
-    icon: 'images/icons/UI/WindowIcons/terminate.png'
-  trash:
-    icon: 'images/icons/UI/WindowIcons/Reprocess.png'
-
-# alias styles
-STYLES.HighSec = STYLES.high
-STYLES.LowSec = STYLES.low
-STYLES.NullSec = STYLES.null
-STYLES.Wormhole = STYLES.wormhole
+STYLES = require './styles.coffee'
 
 HP_BAR_ORDER = ['shield','armor','hull']
 
@@ -414,36 +170,247 @@ StatsUI = React.createClass(
         }
       }
 
-  render: ->
-    if @state.ssoState == 'login'
-      return dom.div {className: 'vert-center'},
+  renderLogin: ->
+    return dom.div {className: 'vert-center'},
         dom.div {className: 'text-center translucent'},
           dom.h2 null, 'EVE: Year in Review'
-          dom.div {className: 'whatIsThis'}, "Your character's story told in charts and numbers based on aggregate data from 2014 and 2013.  A preview of CREST data coming to TQ Soon."
+          dom.div {className: 'whatIsThis'},
+            "Your character's story told in charts and numbers based on aggregate data
+            from 2014 and 2013.  A preview of CREST data coming to TQ Soon."
           dom.div null, React.createElement(SSOLoginButton)
           dom.div {className: 'noAccountText'}, "Don't want to commit just yet? "
-          dom.div null, dom.a({className: 'pointer', onClick: @loadSampleData}, 'Take a look at my stats.')
-          #dom.div {className: 'techDetails'}, "This app requires JavaScript and utilizes EVE's Single Sign On technology.  Your data is only transferred to your browser and never stored on the server.  Basic usage analytics will be collected."
-          dom.div {className: 'broughtToYou'}, "Brought to you by Bellatroix (", dom.a({href:'https://twitter.com/sollaires'}, '@sollaires'), ")"
+          dom.div null,
+            dom.a(
+              {className: 'pointer', onClick: @loadSampleData},
+              'Take a look at my stats.'
+            )
+          dom.div {className: 'broughtToYou'},
+            "Brought to you by Bellatroix ("
+            dom.a({href:'https://twitter.com/sollaires'}, '@sollaires')
+            ")"
           dom.div {className: 'techNotes'}, "Technical details and code available on ",
             dom.a {href: 'https://github.com/seriallos/eve-year-in-review'}, 'Github'
+
+  renderLoading: ->
+      return dom.div {className: 'vert-center'},
+        dom.div {className: 'text-center translucent'},
+          dom.h2 null, "Verifying SSO token and loading your stats..."
+
+  renderNoData: (header) ->
+    return dom.div null,
+
+      header
+
+      dom.div {className: 'vert-center'},
+        dom.div {className: 'text-center translucent'},
+          dom.h2 null, "No data for #{@state.year}"
+
+  renderStats: (header) ->
+    charInfoPanel = React.createElement(
+      CharacterInfoPanel,
+      {
+        character: @state.character
+        corp: @state.corp
+        stats: @state.stats
+      }
+    )
+
+    travelJumpsPanel = React.createElement(TravelJumpsPanel, {stats: @state.stats})
+    travelDistancePanel = React.createElement(TravelDistancePanel, {stats: @state.stats})
+
+    distanceAnalogy = React.createElement(
+      DistanceAnalogyPanel,
+      {
+        distance: @state.stats?.total('travelDistanceWarped')
+      }
+    )
+
+    # calculate max of kills/deaths to share x axis between charts
+    killDeathMax = _.max [
+      @state.stats?.combatKillsHighSec
+      @state.stats?.combatKillsLowSec
+      @state.stats?.combatKillsNullSec
+      @state.stats?.combatKillsWormhole
+
+      @state.stats?.combatDeathsHighSec
+      @state.stats?.combatDeathsLowSec
+      @state.stats?.combatDeathsNullSec
+      @state.stats?.combatDeathsWormhole
+    ]
+
+    killsPanel = React.createElement(KillsPanel, {
+      stats: @state.stats, max: killDeathMax
+    })
+    deathsPanel = React.createElement(DeathsPanel, {
+      stats: @state.stats, max: killDeathMax
+    })
+
+    weaponUsagePanel = React.createElement(WeaponUsagePanel, {stats: @state.stats})
+    damageTakenPanel = React.createElement(DamageTakenPanel, {stats: @state.stats})
+
+    damageAnalogy = React.createElement(DamageAnalogyPanel, {
+      damage: @state.stats?.totalDamageDealt
+    })
+
+    pvpModulesUsage = React.createElement(PvpModulesUsage, {stats: @state.stats})
+    pvpModulesAgainst = React.createElement(PvpModulesAgainst, {stats: @state.stats})
+    miscPvpStats = React.createElement(MiscPvpStats, {stats: @state.stats})
+    miscTooPvpStats = React.createElement(MiscTooPvpStats, {stats: @state.stats})
+
+    selfRepPanel = React.createElement(SelfRepPanel, {stats: @state.stats})
+    repsReceivedPanel = React.createElement(RepsReceivedPanel, {stats: @state.stats})
+    repsGivenPanel = React.createElement(RepsGivenPanel, {stats: @state.stats})
+
+    pveStats = React.createElement(PvePanel, {stats: @state.stats})
+
+    miscModules = React.createElement(MiscModulePanel, {stats: @state.stats})
+
+    industryJobs = React.createElement(IndustryJobsPanel, {stats: @state.stats})
+    blueprints = React.createElement(IndustryBlueprintPanel, {stats: @state.stats})
+
+    miningPanel = React.createElement(MiningPanel, {stats: @state.stats})
+
+    # share same isk max between ISK charts
+    iskMax = _.max [
+      @state.stats?.iskIn
+      @state.stats?.iskOut
+      @state.stats?.marketIskIn
+      @state.stats?.marketIskOut
+    ]
+
+    totalIskPanel = React.createElement(TotalISKPanel, {
+      stats: @state.stats, max: iskMax
+    })
+    marketIskPanel = React.createElement(MarketISKPanel, {
+      stats: @state.stats, max: iskMax
+    })
+
+    iskPerHour = @state.stats.perHour 'iskIn'
+    iskPerHourPull = dom.h4 {className: 'pull-left'},
+      dom.em null, "Your earned #{humanizeLargeNum iskPerHour} ISK per hour."
+
+    marketPanel = React.createElement(MarketPanel, {stats: @state.stats})
+
+    contactsSelfPanel = React.createElement(ContactsPanel, {
+      context: 'self',
+      stats: @state.stats
+    })
+    contactsOtherPanel = React.createElement(ContactsPanel, {
+      context: 'other',
+      stats: @state.stats
+    })
+
+    socialMiscPanel = React.createElement(SocialMiscPanel, {stats: @state.stats})
+
+    chatAnalogy = React.createElement(ChatAnalogyPanel, {
+      chars: @state.stats.socialChatTotalMessageLength
+    })
+
+    miscStats = React.createElement(MiscStats, {stats: @state.stats})
+
+    dscanPerHour = 60 * (@state.stats.genericConeScans / @state.stats.characterMinutes)
+    dscanRate = dom.h4 {className: 'pull-right'},
+      dom.em null, "You d-scan #{numFmt dscanPerHour} times per hour"
+
+    dom.div null,
+      # header
+      header
+
+      # main content
+      dom.div {className: 'container translucent'},
+
+        header
+
+        charInfoPanel
+
+        # Residence / Distance
+
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-6'}, travelJumpsPanel
+          dom.div {className: 'col-md-6'}, travelDistancePanel
+
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, distanceAnalogy
+
+        # PVP
+
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-6'}, killsPanel
+          dom.div {className: 'col-md-6'}, deathsPanel
+
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-6'}, weaponUsagePanel
+          dom.div {className: 'col-md-6'}, damageTakenPanel
+
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, damageAnalogy
+
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-3'}, pvpModulesUsage
+          dom.div {className: 'col-md-3'}, pvpModulesAgainst
+          dom.div {className: 'col-md-3'}, miscPvpStats
+          dom.div {className: 'col-md-3'}, miscTooPvpStats
+
+        # TODO: without spacer columns, things overlap for some reason.  fix that!
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-3'}, repsGivenPanel
+          dom.div {className: 'col-md-1'}, ''
+          dom.div {className: 'col-md-3'}, repsReceivedPanel
+          dom.div {className: 'col-md-1'}, ''
+          dom.div {className: 'col-md-3'}, selfRepPanel
+
+        # PVE Stats
+
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-12'}, miscModules
+
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-12'}, pveStats
+
+        # ISK / Markets
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-6'}, totalIskPanel
+          dom.div {className: 'col-md-6'}, marketIskPanel
+
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, iskPerHourPull
+
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-12'}, marketPanel
+
+        # Industry
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-6'}, miningPanel
+          dom.div {className: 'col-md-6'}, industryJobs
+
+        # Mining
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-12'}, blueprints
+
+
+        # Social
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-6'}, contactsSelfPanel
+          dom.div {className: 'col-md-6'}, contactsOtherPanel
+
+        dom.div {className: 'row top-buffer'},
+          dom.div {className: 'col-md-12'}, socialMiscPanel
+
+        dom.div {className: 'row'},
+          dom.div {className: 'col-md-12'}, chatAnalogy
+
+        dom.div {className: 'row top-buffer'}
+          dom.div {className: 'col-md-12'}, miscStats
+
+        dom.div {className: 'row top-buffer'}
+          dom.div {className: 'col-md-12'}, dscanRate
+
+  render: ->
+    if @state.ssoState == 'login'
+      return @renderLogin()
     else if @state.ssoState == 'loading'
-      return dom.div {className: 'vert-center'}, "Verifying SSO token and loading your stats..."
-    else if not @state.stats and not @state.noData
-      return dom.div {className: 'vert-center'}, "Loading Your Stats..."
+      return @renderLoading()
     else
-
-      if @state.stats
-        facts = new CharacterFacts(@state.stats).getFacts()
-      else
-        facts = null
-
-      title = React.createElement(Title, {
-        character: @state.character,
-        year: @state.year,
-        switchToYear: @loadStatsYear,
-        hideSwitch: @state.sample
-      })
       header = React.createElement(Header, {
         character: @state.character,
         year: @state.year,
@@ -452,192 +419,18 @@ StatsUI = React.createClass(
       })
 
       if @state.noData
-        return dom.div null,
+        return @renderNoData(header)
+      else
+        return @renderStats(header)
 
-          header
-
-          dom.div {className: 'container translucent'},
-            dom.div null, "No data for #{@state.year}"
-
-      charInfoPanel = React.createElement(CharacterInfoPanel, {
-        character: @state.character
-        corp: @state.corp
-        facts: facts
-        stats: @state.stats
-      })
-
-      travelJumpsPanel = React.createElement(TravelJumpsPanel, {stats: @state.stats})
-      travelDistancePanel = React.createElement(TravelDistancePanel, {stats: @state.stats})
-
-      distanceAnalogy = React.createElement(DistanceAnalogyPanel, {distance: @state.stats?.total('travelDistanceWarped')})
-
-      max = _.max [
-        @state.stats?.combatKillsHighSec
-        @state.stats?.combatKillsLowSec
-        @state.stats?.combatKillsNullSec
-        @state.stats?.combatKillsWormhole
-
-        @state.stats?.combatDeathsHighSec
-        @state.stats?.combatDeathsLowSec
-        @state.stats?.combatDeathsNullSec
-        @state.stats?.combatDeathsWormhole
-      ]
-
-      killsPanel = React.createElement(KillsPanel, {stats: @state.stats, max: max})
-      deathsPanel = React.createElement(DeathsPanel, {stats: @state.stats, max: max})
-
-      weaponUsagePanel = React.createElement(WeaponUsagePanel, {stats: @state.stats})
-      damageTakenPanel = React.createElement(DamageTakenPanel, {stats: @state.stats})
-
-      damageAnalogy = React.createElement(DamageAnalogyPanel, {damage: @state.stats?.totalDamageDealt})
-
-      pvpModulesUsage = React.createElement(PvpModulesUsage, {stats: @state.stats})
-      pvpModulesAgainst = React.createElement(PvpModulesAgainst, {stats: @state.stats})
-      miscPvpStats = React.createElement(MiscPvpStats, {stats: @state.stats})
-      miscTooPvpStats = React.createElement(MiscTooPvpStats, {stats: @state.stats})
-
-      selfRepPanel = React.createElement(SelfRepPanel, {stats: @state.stats})
-      repsReceivedPanel = React.createElement(RepsReceivedPanel, {stats: @state.stats})
-      repsGivenPanel = React.createElement(RepsGivenPanel, {stats: @state.stats})
-
-      pveStats = React.createElement(PvePanel, {stats: @state.stats})
-
-      miscModules = React.createElement(MiscModulePanel, {stats: @state.stats})
-
-      industryJobs = React.createElement(IndustryJobsPanel, {stats: @state.stats})
-      blueprints = React.createElement(IndustryBlueprintPanel, {stats: @state.stats})
-
-      miningPanel = React.createElement(MiningPanel, {stats: @state.stats})
-
-      max = _.max [
-        @state.stats?.iskIn
-        @state.stats?.iskOut
-        @state.stats?.marketIskIn
-        @state.stats?.marketIskOut
-      ]
-
-      totalIskPanel = React.createElement(TotalISKPanel, {stats: @state.stats, max: max})
-      marketIskPanel = React.createElement(MarketISKPanel, {stats: @state.stats, max: max})
-
-      iskPerHour = @state.stats.perHour 'iskIn'
-      iskPerHourPull = dom.h4 {className: 'pull-left'},
-        dom.em null, "Your earned #{humanizeLargeNum iskPerHour} ISK per hour."
-
-      marketPanel = React.createElement(MarketPanel, {stats: @state.stats})
-
-      contactsSelfPanel = React.createElement(ContactsPanel, {context: 'self', stats: @state.stats})
-      contactsOtherPanel = React.createElement(ContactsPanel, {context: 'other', stats: @state.stats})
-
-      socialMiscPanel = React.createElement(SocialMiscPanel, {stats: @state.stats})
-
-      chatAnalogy = React.createElement(ChatAnalogyPanel, {chars: @state.stats.socialChatTotalMessageLength})
-
-      miscStats = React.createElement(MiscStats, {stats: @state.stats})
-
-      dscanPerHour = 60 * (@state.stats.genericConeScans / @state.stats.characterMinutes)
-      dscanRate = dom.h4 {className: 'pull-right'},
-        dom.em null, "You d-scan #{numFmt dscanPerHour} times per hour"
-
-      #rawStatsList = React.createElement(RawStatsList, {stats: @state.stats})
-
-      dom.div null,
-        # header
-        header
-
-        # main content
-        dom.div {className: 'container translucent'},
-
-          header
-
-          charInfoPanel
-
-          # Residence / Distance
-
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-6'}, travelJumpsPanel
-            dom.div {className: 'col-md-6'}, travelDistancePanel
-
-          dom.div {className: 'row'},
-            dom.div {className: 'col-md-12'}, distanceAnalogy
-
-          # PVP
-
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-6'}, killsPanel
-            dom.div {className: 'col-md-6'}, deathsPanel
-
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-6'}, weaponUsagePanel
-            dom.div {className: 'col-md-6'}, damageTakenPanel
-
-          dom.div {className: 'row'},
-            dom.div {className: 'col-md-12'}, damageAnalogy
-
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-3'}, pvpModulesUsage
-            dom.div {className: 'col-md-3'}, pvpModulesAgainst
-            dom.div {className: 'col-md-3'}, miscPvpStats
-            dom.div {className: 'col-md-3'}, miscTooPvpStats
-
-          # TODO: without spacer columns, things overlap for some reason.  fix that!
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-3'}, repsGivenPanel
-            dom.div {className: 'col-md-1'}, ''
-            dom.div {className: 'col-md-3'}, repsReceivedPanel
-            dom.div {className: 'col-md-1'}, ''
-            dom.div {className: 'col-md-3'}, selfRepPanel
-
-          # PVE Stats
-
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-12'}, miscModules
-
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-12'}, pveStats
-
-          # ISK / Markets
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-6'}, totalIskPanel
-            dom.div {className: 'col-md-6'}, marketIskPanel
-
-          dom.div {className: 'row'},
-            dom.div {className: 'col-md-12'}, iskPerHourPull
-
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-12'}, marketPanel
-
-          # Industry
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-6'}, miningPanel
-            dom.div {className: 'col-md-6'}, industryJobs
-
-          # Mining
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-12'}, blueprints
-
-
-          # Social
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-6'}, contactsSelfPanel
-            dom.div {className: 'col-md-6'}, contactsOtherPanel
-
-          dom.div {className: 'row top-buffer'},
-            dom.div {className: 'col-md-12'}, socialMiscPanel
-
-          dom.div {className: 'row'},
-            dom.div {className: 'col-md-12'}, chatAnalogy
-
-          dom.div {className: 'row top-buffer'}
-            dom.div {className: 'col-md-12'}, miscStats
-
-          dom.div {className: 'row top-buffer'}
-            dom.div {className: 'col-md-12'}, dscanRate
 )
 
 SSOLoginButton = React.createClass(
   displayName: 'SSOLoginButton'
   render: ->
-    ssoLoginImage = 'https://images.contentful.com/idjq7aai9ylm/4PTzeiAshqiM8osU2giO0Y/5cc4cb60bac52422da2e45db87b6819c/EVE_SSO_Login_Buttons_Large_White.png?w=270&h=45'
+    ssoLoginImage =  'https://images.contentful.com/idjq7aai9ylm/4PTzeiAshqiM8osU2giO0Y'
+    ssoLoginImage += '/5cc4cb60bac52422da2e45db87b6819c/'
+    ssoLoginImage += 'EVE_SSO_Login_Buttons_Large_White.png?w=270&h=45'
     ssoParams =
       response_type: 'token'
       redirect_uri: SSO_CALLBACK_URL
@@ -666,7 +459,12 @@ Header = React.createClass(
     for year in years
       yearLis.push dom.li(null, dom.a({key: year, onClick: @onYearClick(year)}, year))
     yearDropdown = dom.li {className: 'dropdown'},
-              dom.a {className: 'dropdown-toggle', 'data-toggle': 'dropdown', role: 'button', 'aria-expanded': false}, "Year ", dom.span({className: 'caret'})
+              dom.a {
+                className: 'dropdown-toggle',
+                'data-toggle': 'dropdown',
+                role: 'button',
+                'aria-expanded': false
+              }, "Year ", dom.span({className: 'caret'})
               dom.ul {className: 'dropdown-menu', role: 'menu'},
                 yearLis
 
@@ -675,7 +473,8 @@ Header = React.createClass(
         dom.div {className: 'collapse navbar-collapse'},
           dom.a {className: 'navbar-brand'},
             React.createElement(CharacterAvatar, {id: @props.character.id, width: 32})
-          dom.p {className: 'navbar-link navbar-text'}, @props.character.name, ', ', @props.year
+          dom.p {className: 'navbar-link navbar-text'},
+            @props.character.name, ', ', @props.year
           dom.ul {className: 'nav navbar-nav'},
             dom.li null,
               yearDropdown unless @props.hideSwitch
@@ -684,24 +483,14 @@ Header = React.createClass(
               React.createElement(SSOLoginButton, {linkText: 'Change Character'})
 )
 
-Title = React.createClass(
-  displayName: 'Title'
-  switchYear: ->
-    return if @props.year == 2014 then 2013 else 2014
-  onClick: ->
-    this.props.switchToYear(@switchYear())
-  render: ->
-    dom.h2 null,
-      "#{@props.character.name}'s Year in Review, #{@props.year}"
-      if not @props.hideSwitch then dom.small null, " ", dom.a({onClick: @onClick}, "View #{@switchYear()}")
-)
-
 CharacterInfoPanel = React.createClass(
   displayName: 'CharacterInfoPanel'
   render: ->
+    onlineMinutes = @props.stats.characterMinutes
     thisIsEveLength = 3 + (42 / 60)
-    timesWatched = Math.floor(@props.stats.characterMinutes / thisIsEveLength)
-    avgSession = Math.round(@props.stats.characterMinutes / @props.stats.characterSessionsStarted)
+    timesWatched = Math.floor(onlineMinutes / thisIsEveLength)
+    avgSession = Math.round(onlineMinutes/ @props.stats.characterSessionsStarted)
+
     dom.div {className: 'row'},
       dom.div {className: 'col-md-3'},
         React.createElement(CharacterAvatar, {id: @props.character.id})
@@ -870,7 +659,8 @@ DistanceAnalogyPanel = React.createClass(
       totalAu = @props.distance
       travelSeconds = totalAu / speedOfLightAu
       lightSpeedYears = numFmt(d3.round(travelSeconds / 60 / 60 / 24/ 365, 1))
-      distanceText = "#{vehicle.name} would take #{lightSpeedYears} years to cover your total distance travelled."
+      distanceText = "#{vehicle.name} would take #{lightSpeedYears} years
+                      to cover your total distance travelled."
       return dom.h4 {className: 'pull-right'}, dom.em(null,distanceText)
     else
       return null
@@ -904,7 +694,8 @@ KillsPanel = React.createClass(
         ' '
         dom.small null, 'Player Ships'
       React.createElement(BarChart, {data: @chartData(), max: @props.max})
-      dom.div null, "Assisted on #{numFmt @props.stats?.combatKillsAssists} ship killmails, popped #{numFmt @props.stats?.combatKillsPodTotal} pods."
+      dom.div null, "Assisted on #{numFmt @props.stats?.combatKillsAssists} ship 
+                     killmails, popped #{numFmt @props.stats?.combatKillsPodTotal} pods."
 )
 
 DeathsPanel = React.createClass(
@@ -1108,6 +899,8 @@ DamageAnalogyPanel = React.createClass(
     else
       shipToUse = null
       numShips = 0
+      # find a good candidate ship to show, first ship that results in less than 100
+      # stamps
       for name, ship of @ships
         shipToUse = name
         numShips = @numShips(name)
@@ -1118,8 +911,14 @@ DamageAnalogyPanel = React.createClass(
       numShips = @numShips(shipToUse)
       wholeShips = Math.floor(numShips)
       partial = numShips - wholeShips
+
       stamps = []
-      imgOpts = {src: ship.image, width: ship.width, height: ship.height, className: 'stamp'}
+      imgOpts =
+        src: ship.image,
+        width: ship.width,
+        height: ship.height,
+        className: 'stamp'
+
       for i in [0...Math.floor(numShips)]
         stamps.push dom.div({className: 'pull-left'}, dom.img(imgOpts))
       # handle partial stamp by hiding overflow and explicitly setting width
@@ -1152,12 +951,18 @@ CalloutPanel = React.createClass(
   render: ->
     if @props.callouts
       calloutElements = @props.callouts.map (callout) ->
-        return React.createElement(CalloutStat, _.merge(callout, {key: callout.description}))
+        opts = _.merge(callout, {key: callout.description})
+        return React.createElement(CalloutStat, opts)
+      # figure out number of items per column
+      # this is a naive method that doesn't balance
       itemsPerCol = Math.ceil(calloutElements.length / @props.columns)
       columns = []
       colSize = 12 / @props.columns
       for i in [0...@props.columns]
-        col = dom.div {className: "col-md-#{colSize}", key: i}, _.take(calloutElements, itemsPerCol)
+        divOpts =
+          className: "col-md-#{colSize}",
+          key: i
+        col = dom.div divOpts, _.take(calloutElements, itemsPerCol)
         calloutElements.splice(0, itemsPerCol)
         columns.push col
       dom.div null,
@@ -1283,7 +1088,12 @@ SelfRepPanel = React.createClass(
   render: ->
     dom.div {className: 'row'},
       dom.h3 null, 'Local Reps'
-        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical', showZero: true})
+        React.createElement(PieDataPanel,{
+          data: @chartData(),
+          chartType: 'shipHp',
+          layout: 'vertical',
+          showZero: true
+        })
 )
 
 RepsGivenPanel = React.createClass(
@@ -1307,7 +1117,12 @@ RepsGivenPanel = React.createClass(
   render: ->
     dom.div {className: 'row'},
       dom.h3 null, 'Remote Reps Given'
-        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical', showZero: true})
+        React.createElement(PieDataPanel,{
+          data: @chartData(),
+          chartType: 'shipHp',
+          layout: 'vertical',
+          showZero: true
+        })
 )
 
 RepsReceivedPanel = React.createClass(
@@ -1331,7 +1146,12 @@ RepsReceivedPanel = React.createClass(
   render: ->
     dom.div {className: 'row'},
       dom.h3 null, 'Reps Received'
-        React.createElement(PieDataPanel,{data: @chartData(), chartType: 'shipHp', layout: 'vertical', showZero: true})
+        React.createElement(PieDataPanel,{
+          data: @chartData(),
+          chartType: 'shipHp',
+          layout: 'vertical',
+          showZero: true
+        })
 )
 
 PvePanel = React.createClass(
@@ -1380,7 +1200,11 @@ PvePanel = React.createClass(
           iconId: styleIconId 'dataCan'
         }
       ]
-      return React.createElement(CalloutPanel, {title: 'PVE', callouts: callouts, columns: 4})
+      return React.createElement(CalloutPanel, {
+        title: 'PVE',
+        callouts: callouts,
+        columns: 4
+      })
     else
       return null
 )
@@ -1505,7 +1329,11 @@ IndustryBlueprintPanel = React.createClass(
           icon: 'jobInvention'
         }
       ]
-      return React.createElement(CalloutPanel, {title: 'Blueprints', callouts: callouts, columns: 4})
+      return React.createElement(CalloutPanel, {
+        title: 'Blueprints',
+        callouts: callouts,
+        columns: 4
+      })
     else
       return null
 )
@@ -1621,7 +1449,12 @@ TotalISKPanel = React.createClass(
         'ISK'
         ' '
         dom.small null, 'All Sources'
-      React.createElement(BarChart, {data: @chartData(), margin: margin, max: @props.max, formatter: humanizeLargeNum})
+      React.createElement(BarChart, {
+        data: @chartData(),
+        margin: margin,
+        max: @props.max,
+        formatter: humanizeLargeNum
+      })
 )
 
 
@@ -1649,7 +1482,12 @@ MarketISKPanel = React.createClass(
         'ISK'
         ' '
         dom.small null, 'Market Only'
-      React.createElement(BarChart, {data: @chartData(), margin: margin, max: @props.max, formatter: humanizeLargeNum})
+      React.createElement(BarChart, {
+        data: @chartData(),
+        margin: margin,
+        max: @props.max,
+        formatter: humanizeLargeNum
+      })
 )
 
 MarketPanel = React.createClass(
@@ -1698,7 +1536,11 @@ MarketPanel = React.createClass(
           iconId: styleIconId 'courierDeliver'
         }
       ]
-      return React.createElement(CalloutPanel, {title: 'Market and Contracts', callouts: callouts, columns: 4})
+      return React.createElement(CalloutPanel, {
+        title: 'Market and Contracts',
+        callouts: callouts,
+        columns: 4
+      })
     else
       return null
 )
@@ -1740,7 +1582,11 @@ ContactsPanel = React.createClass(
       dom.h3 null,
         title
       # override sort with a function that doesn't change order
-      React.createElement(PieDataPanel, {data: data, showZero: true, sort: (a, b) -> 0})
+      React.createElement(PieDataPanel, {
+        data: data,
+        showZero: true,
+        sort: (a, b) -> 0
+      })
 
 )
 
@@ -1780,7 +1626,11 @@ SocialMiscPanel = React.createClass(
           icon: 'fleetBroadcasts'
         }
       ]
-      return React.createElement(CalloutPanel, {title: 'Social / Fleets', callouts: callouts, columns: 3})
+      return React.createElement(CalloutPanel, {
+        title: 'Social / Fleets',
+        callouts: callouts,
+        columns: 3
+      })
     else
       return null
 )
@@ -1814,7 +1664,8 @@ ChatAnalogyPanel = React.createClass(
     if @props.chars > 0
       book = _.sample @books
       numCopies = d3.round((@props.chars / @charsPerWord) / book.words, 2)
-      chatText = "Your total chat is roughly the same length as #{numCopies} copies of #{book.name}"
+      chatText = "Your total chat is roughly the same length as #{numCopies} copies
+                  of #{book.name}"
       return dom.h4 {className: 'pull-left'}, dom.em(null,chatText)
     else
       return null
@@ -1876,7 +1727,11 @@ MiscStats = React.createClass(
           icon: 'trash'
         }
       ]
-      return React.createElement(CalloutPanel, {title: 'The Rest', callouts: callouts, columns: 4})
+      return React.createElement(CalloutPanel, {
+        title: 'The Rest',
+        callouts: callouts,
+        columns: 4
+      })
     else
       null
 )
@@ -1909,17 +1764,28 @@ PieDataPanel = React.createClass(
         showColor = true
       when 'shipHp'
         chartElementType = ShipHPChart
-        sortFn = (a, b) -> return HP_BAR_ORDER.indexOf(a.key) - HP_BAR_ORDER.indexOf(b.key)
+        sortFn = (a, b) ->
+          return HP_BAR_ORDER.indexOf(a.key) - HP_BAR_ORDER.indexOf(b.key)
         showColor = false
+
     if @props.sort
       sortFn = @props.sort
+
     data = @deriveData(sortFn)
 
     if @total == 0
       return dom.div null, "No activity this year"
 
-    chart = React.createElement(chartElementType, {data: data, total: @total})
-    table = React.createElement(PieDataTable,{data: data, total: @total, showZero: @props.showZero, showColor: showColor})
+    chart = React.createElement(chartElementType, {
+      data: data,
+      total: @total
+    })
+    table = React.createElement(PieDataTable,{
+      data: data,
+      total: @total,
+      showZero: @props.showZero,
+      showColor: showColor
+    })
 
     if @props.layout is 'horizontal'
       return dom.div {className: 'row'},
