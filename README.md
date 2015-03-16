@@ -3,6 +3,18 @@ EVE Year in Review
 
 Showcase of new character stats for EVE Fanfest 2015
 
+Notes
+-----
+
+* Application is purely client side, implemented entirely in JavaScript
+    * Only data collection is Google Analytics, your data is never sent to or stored on a
+    server.
+* Built primarily using
+    * React
+    * d3
+    * Bootstrap
+    * Bit of jQuery
+
 Dev Prerequisites
 -----------------
 
