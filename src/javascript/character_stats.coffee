@@ -27,6 +27,22 @@ class CharacterStats
     pct = @[prefix + suffix] / total
     return pct
 
+  perMinute: (stat) ->
+    if @characterMinutes
+      return @[stat] / @characterMinutes
+    else
+      return null
+
+  perHour: (stat) ->
+    perMinute = @perMinute(stat)
+    if perMinute
+      return perMinute * 60
+    else
+      return null
+
+  get: (stat) ->
+    return @[stat]
+
   calcDerived: ->
     # fix a few stats
     @iskOut = -(@iskOut)
