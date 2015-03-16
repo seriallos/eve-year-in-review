@@ -12,6 +12,9 @@ CONFIG =
       'disda.in':
         sso_client_id: 'be843963a3cf4ed3a5de411f1b4a84d4'
         callback_url: 'http://disda.in/eve/yir/'
+      'spreadsheetsin.space':
+        sso_client_id: 'ee5517f79a684842b0a5cf599d752411'
+        callback_url: 'http://spreadsheetsin.space/year-in-review/'
   live:
     sso_host: 'https://login.eveonline.com'
     sso_client_id: '67a0cc0f68d34e77b9751f8c75dd2e31'
