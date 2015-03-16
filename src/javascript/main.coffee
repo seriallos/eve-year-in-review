@@ -186,10 +186,13 @@ StatsUI = React.createClass(
             )
           dom.div {className: 'broughtToYou'},
             "Brought to you by Bellatroix ("
-            dom.a({href:'https://twitter.com/sollaires'}, '@sollaires')
+            dom.a({href:'https://twitter.com/sollaires', target: '_blank'}, '@sollaires')
             ")"
           dom.div {className: 'techNotes'}, "Technical details and code available on ",
-            dom.a {href: 'https://github.com/seriallos/eve-year-in-review'}, 'GitHub'
+            dom.a {
+              href: 'https://github.com/seriallos/eve-year-in-review'
+              target: '_blank'
+            }, 'GitHub'
 
   renderLoading: ->
       return dom.div {className: 'vert-center'},
