@@ -106,6 +106,7 @@ StatsUI = React.createClass(
       sample: false
     }
   componentDidMount: ->
+    # look for access_token in the hash from the SSO redirect
     hash = window.location.hash.substring(1)
     hashParts = qs.parse(hash)
     window.location.hash = ''
@@ -133,10 +134,14 @@ StatsUI = React.createClass(
           [ foo, foo, characterId ] = charUrlParsed.path.split '/'
           @setState {character: {id: characterId, name: '', url: data.character.href}}
           statsUrl = data.character.href + "statistics/year/2014/"
+
+          # this will be an async call to populate name
           jrequest data.character.href, (err, data, xhr) =>
             char = @state.character
             char.name = data.name
-            @setState {character: char, corp: char.corporation}
+            @setState {character: char}
+
+          # don't wait for character data, just call and load
           @loadStatsYear(2014)
 
   loadStatsYear: (year) ->
@@ -163,14 +168,9 @@ StatsUI = React.createClass(
           name: 'Bellatroix'
           id: 1412571394
         }
-        corp: {
-          name: 'Folkvangr Acres'
-          logo:
-            '32x32': ''
-        }
       }
 
-  renderLogin: ->
+  renderInitialPage: ->
     return dom.div {className: 'vert-center'},
         dom.div {className: 'text-center translucent'},
           dom.h2 null, 'EVE: Year in Review'
@@ -210,7 +210,6 @@ StatsUI = React.createClass(
       CharacterInfoPanel,
       {
         character: @state.character
-        corp: @state.corp
         stats: @state.stats
       }
     )
@@ -310,7 +309,7 @@ StatsUI = React.createClass(
 
     dscanPerHour = 60 * (@state.stats.genericConeScans / @state.stats.characterMinutes)
     dscanRate = dom.h4 {className: 'pull-right'},
-      dom.em null, "You d-scan #{numFmt dscanPerHour} times per hour"
+      dom.em null, "You d-scanned #{numFmt dscanPerHour} times per hour"
 
     dom.div null,
       # header
@@ -407,7 +406,7 @@ StatsUI = React.createClass(
 
   render: ->
     if @state.ssoState == 'login'
-      return @renderLogin()
+      return @renderInitialPage()
     else if @state.ssoState == 'loading'
       return @renderLoading()
     else
@@ -520,7 +519,10 @@ CharacterInfoPanel = React.createClass(
           dom.h4 {className: 'pull-left'},
             dom.em null,
               "You could have watched "
-              dom.a {href: 'https://www.youtube.com/watch?v=AdfFnTt2UT0'}, "This is EVE"
+              dom.a {
+                href: 'https://www.youtube.com/watch?v=AdfFnTt2UT0'
+                target: '_blank'
+                }, "This is EVE"
               " #{numFmt timesWatched} times instead of playing."
 )
 
@@ -655,12 +657,12 @@ DistanceAnalogyPanel = React.createClass(
     if @props.distance > 0
       vehicle = _.sample @vehicles
       speedKmPerS = vehicle.speed / 1000
-      speedOfLightAu = speedKmPerS / 149597871
+      speedAuPerS = speedKmPerS / 149597871
       totalAu = @props.distance
-      travelSeconds = totalAu / speedOfLightAu
-      lightSpeedYears = numFmt(d3.round(travelSeconds / 60 / 60 / 24/ 365, 1))
-      distanceText = "#{vehicle.name} would take #{lightSpeedYears} years
-                      to cover your total distance travelled."
+      travelSeconds = totalAu / speedAuPerS
+      years = numFmt(d3.round(travelSeconds / 60 / 60 / 24/ 365, 1))
+      distanceText = "#{vehicle.name} would take #{years} years
+                      to cover your total distance."
       return dom.h4 {className: 'pull-right'}, dom.em(null,distanceText)
     else
       return null
@@ -935,8 +937,8 @@ DamageAnalogyPanel = React.createClass(
       return dom.div {className: 'row'},
         dom.h4 {className: 'pull-left'},
           dom.em null,
-            "You have dealt enough damage to kill #{numShips} "
-            dom.a {href: ship.fit}, ship.pluralName
+            "You dealt enough damage to kill #{numShips} "
+            dom.a {href: ship.fit, target: '_blank'}, ship.pluralName
         dom.div {className: 'clearfix'}, ''
         dom.div {className: ''}, stamps
 
@@ -980,12 +982,12 @@ PvpModulesUsage = React.createClass(
       callouts = [
         {
           value: @props.stats.combatWebifyingPC
-          description: 'Webbed Players'
+          description: 'Times You Webbed Players'
           iconId: styleIconId 'web'
         }
         {
           value: @props.stats.combatWarpScramblePC
-          description: 'Pointed Players'
+          description: 'Times You Pointed Players'
           iconId: styleIconId 'scram'
         }
         {
@@ -1006,12 +1008,12 @@ PvpModulesAgainst = React.createClass(
       callouts = [
         {
           value: @props.stats.combatWebifiedbyPC
-          description: 'Webbed by Players'
+          description: 'Times Webbed by Players'
           iconId: styleIconId 'web'
         }
         {
           value: @props.stats.combatWarpScrambledbyPC
-          description: 'Pointed by Players'
+          description: 'Times Pointed by Players'
           iconId: styleIconId 'scram'
         }
         {
@@ -1161,7 +1163,7 @@ PvePanel = React.createClass(
       callouts = [
         {
           value: @props.stats.combatNpcFlagSet
-          description: 'NPC Flagged'
+          description: 'NPC Combat Flags'
           iconId: styleIconId 'npcFlag'
         }
         {
@@ -1171,12 +1173,12 @@ PvePanel = React.createClass(
         }
         {
           value: @props.stats.combatWarpScrambledbyNPC
-          description: 'Scrammed by NPC'
+          description: 'Times Scrammed by NPC'
           iconId: styleIconId 'scram'
         }
         {
           value: @props.stats.combatWebifiedbyNPC
-          description: 'Webbed by NPC'
+          description: 'Times Webbed by NPC'
           iconId: styleIconId 'web'
         }
         {
@@ -1189,21 +1191,22 @@ PvePanel = React.createClass(
           description: 'Epic Arcs Completed'
           iconId: styleIconId 'epicArc'
         }
-        {
-          value: @props.stats.industryArcheologySuccesses
-          description: 'Relic Cans Hacked'
-          iconId: styleIconId 'relicCan'
-        }
-        {
-          value: @props.stats.industryHackingSuccesses
-          description: 'Data Cans Hacked'
-          iconId: styleIconId 'dataCan'
-        }
+        # these appear broken right now
+        #{
+        #  value: @props.stats.industryArcheologySuccesses
+        #  description: 'Relic Cans Hacked'
+        #  iconId: styleIconId 'relicCan'
+        #}
+        #{
+        #  value: @props.stats.industryHackingSuccesses
+        #  description: 'Data Cans Hacked'
+        #  iconId: styleIconId 'dataCan'
+        #}
       ]
       return React.createElement(CalloutPanel, {
         title: 'PVE',
         callouts: callouts,
-        columns: 4
+        columns: 3
       })
     else
       return null
