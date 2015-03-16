@@ -666,7 +666,8 @@ DistanceAnalogyPanel = React.createClass(
       years = numFmt(d3.round(travelSeconds / 60 / 60 / 24/ 365, 1))
       distanceText = "#{vehicle.name} would take #{years} years
                       to cover your total distance."
-      return dom.h4 {className: 'pull-right'}, dom.em(null,distanceText)
+      return dom.h4 {className: 'pull-right'},
+        dom.em(null,distanceText)
     else
       return null
 )
@@ -898,19 +899,29 @@ DamageAnalogyPanel = React.createClass(
       height: 48
   numShips: (shipKey) ->
     return d3.round(@props.damage / @ships[shipKey].ehp, 1)
+  getInitialState: ->
+    return {
+      ship: null
+    }
+  componentDidMount: ->
+    shipToUse = null
+    numShips = 0
+    # find a good candidate ship to show, first ship that results in less than 100
+    # stamps
+    for name, ship of @ships
+      shipToUse = name
+      numShips = @numShips(name)
+      if numShips < 100
+        break
+    @setState {ship: shipToUse}
   render: ->
     if @props.damage == 0
       return null
     else
-      shipToUse = null
-      numShips = 0
-      # find a good candidate ship to show, first ship that results in less than 100
-      # stamps
-      for name, ship of @ships
-        shipToUse = name
-        numShips = @numShips(name)
-        if numShips < 100
-          break
+      if not @state.ship
+        return null
+
+      shipToUse = @state.ship
 
       ship = @ships[shipToUse]
       numShips = @numShips(shipToUse)
@@ -938,6 +949,26 @@ DamageAnalogyPanel = React.createClass(
         stamps.push dom.div(divOpts, dom.img(imgOpts))
 
       return dom.div {className: 'row'},
+        dom.div {className: 'dropdown pull-left'},
+          dom.button {
+            id: 'shipDropdown'
+            className: 'btn btn-xs btn-default dropdown-toggle'
+            type: 'button'
+            'data-toggle': 'dropdown'
+            'aria-expanded': false
+          }, 'More Ships', ' ', dom.span({className: 'caret'})
+          dom.ul {
+            className: 'dropdown-menu',
+            role: 'menu',
+            'aria-labelledby': 'shipDropdown'
+          }, _.map @ships, (ship, name) =>
+            return dom.li {role: 'presentation'},
+              dom.a {
+                role: 'menuitem',
+                tabindex: '-1',
+                onClick: =>
+                  @setState {ship: name}
+              }, ship.pluralName
         dom.h4 {className: 'pull-left'},
           dom.em null,
             "You dealt enough damage to kill #{numShips} "
