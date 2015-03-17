@@ -14,7 +14,7 @@ CONFIG =
         callback_url: 'http://disda.in/eve/yir/'
       'spreadsheetsin.space':
         sso_client_id: 'ee5517f79a684842b0a5cf599d752411'
-        callback_url: 'http://spreadsheetsin.space/year-in-review/'
+        callback_url: 'https://spreadsheetsin.space/year-in-review/'
   live:
     sso_host: 'https://login.eveonline.com'
     sso_client_id: '67a0cc0f68d34e77b9751f8c75dd2e31'
@@ -292,7 +292,7 @@ StatsUI = React.createClass(
 
     iskPerHour = @state.stats.perHour 'iskIn'
     iskPerHourPull = dom.h4 {className: 'pull-left'},
-      dom.em null, "Your earned #{humanizeLargeNum iskPerHour} ISK per hour."
+      dom.em null, "You earned #{humanizeLargeNum iskPerHour} ISK per hour."
 
     marketPanel = React.createElement(MarketPanel, {stats: @state.stats})
 
@@ -441,7 +441,7 @@ SSOLoginButton = React.createClass(
       redirect_uri: SSO_CALLBACK_URL
       client_id: SSO_CLIENT_ID
       scope: 'publicData characterStatisticsRead'
-      state: 'testState'
+      state: ''
 
     ssoUrl = "#{SSO_HOST}/oauth/authorize/?#{qs.stringify ssoParams}"
 
@@ -906,7 +906,7 @@ DamageAnalogyPanel = React.createClass(
     return {
       ship: null
     }
-  componentDidMount: ->
+  determineShipToUse: ->
     shipToUse = null
     numShips = 0
     # find a good candidate ship to show, first ship that results in less than 100
@@ -917,6 +917,8 @@ DamageAnalogyPanel = React.createClass(
       if numShips < 100
         break
     @setState {ship: shipToUse}
+  componentDidMount: ->
+    @determineShipToUse()
   render: ->
     if @props.damage == 0
       return null
@@ -1695,7 +1697,6 @@ ChatAnalogyPanel = React.createClass(
     mobydick:
       name: 'Crime and Punishment'
       words: 211591
-      link: 'http://www.gutenberg.org/files/2701/2701.txt'
     atlasshrugged:
       name: 'Atlas Shrugged'
       words: 561996
