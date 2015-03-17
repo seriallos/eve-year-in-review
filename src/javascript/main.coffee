@@ -322,7 +322,7 @@ StatsUI = React.createClass(
       header
 
       # main content
-      dom.div {className: 'container translucent'},
+      dom.div {className: 'container translucent main'},
 
         header
 
@@ -497,7 +497,7 @@ CharacterInfoPanel = React.createClass(
     avgSession = Math.round(onlineMinutes/ @props.stats.characterSessionsStarted)
 
     dom.div {className: 'row'},
-      dom.div {className: 'col-md-3'},
+      dom.div {className: 'col-md-3 avatar'},
         React.createElement(CharacterAvatar, {id: @props.character.id})
       dom.div {className: 'col-md-9'},
         dom.div {className: 'row'},
