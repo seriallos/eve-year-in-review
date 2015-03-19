@@ -18,7 +18,8 @@
     "d3": "global:d3",
     "react": "global:React",
     "lodash": "global:_",
-    "numeral": "global:numeral"
+    "numeral": "global:numeral",
+    "googleanalytics": "global:ga"
   },
   "devDependencies": {
     "browser-sync": "~1.3.6",
