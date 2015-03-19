@@ -148,7 +148,7 @@ StatsUI = React.createClass(
           @loadStatsYear(2014, false)
 
   loadStatsYear: (year, track = true) ->
-    ga 'send', 'pageview', "/#{year}"
+    ga 'send', 'pageview', "/year-in-review/#{year}"
     url = "#{@state.character.url}statistics/year/#{year}/"
     jrequest url, (err, data, xhr) =>
       if err and xhr.status == 404
@@ -158,7 +158,7 @@ StatsUI = React.createClass(
         @setState {stats: stats, year: year, ssoState: 'loaded', noData: false}
 
   loadSampleData: ->
-    ga 'send', 'pageview', '/sample'
+    ga 'send', 'pageview', '/year-in-review/sample'
     host = window.location.host
     proto = window.location.protocol
     sample = './bella.json'
