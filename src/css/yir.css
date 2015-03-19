@@ -7,7 +7,7 @@
   font-family: 'Open Sans', sans-serif;
 }
 
-h1,h2,h3,h4,h5,h6 {
+h1,h2,h3{
   font-family: 'Play', sans-serif;
   text-transform: uppercase;
 }
@@ -142,4 +142,12 @@ div.circle {
   text-align: center;
   /* pull description up just a bit */
   margin-top: -8px;
+}
+
+.repRow {
+  margin-left: 15px;
+}
+
+.damageAnalogy {
+  margin-left: 10px;
 }

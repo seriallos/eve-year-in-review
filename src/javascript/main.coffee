@@ -357,7 +357,7 @@ StatsUI = React.createClass(
           dom.div {className: 'col-md-3'}, miscTooPvpStats
 
         # TODO: without spacer columns, things overlap for some reason.  fix that!
-        dom.div {className: 'row top-buffer'},
+        dom.div {className: 'row top-buffer repRow'},
           dom.div {className: 'col-md-3'}, repsGivenPanel
           dom.div {className: 'col-md-1'}, ''
           dom.div {className: 'col-md-3'}, repsReceivedPanel
@@ -953,7 +953,7 @@ DamageAnalogyPanel = React.createClass(
             overflow: 'hidden'
         stamps.push dom.div(divOpts, dom.img(imgOpts))
 
-      return dom.div {className: 'row'},
+      return dom.div {className: 'row damageAnalogy'},
         dom.div {className: 'dropdown'},
           dom.button {
             id: 'shipDropdown'
