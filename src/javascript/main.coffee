@@ -136,7 +136,6 @@ StatsUI = React.createClass(
           charUrlParsed = urlParse data.character.href
           [ foo, foo, characterId ] = charUrlParsed.path.split '/'
           @setState {character: {id: characterId, name: '', url: data.character.href}}
-          statsUrl = data.character.href + "statistics/year/2014/"
 
           # this will be an async call to populate name
           jrequest data.character.href, (err, data, xhr) =>
@@ -179,7 +178,7 @@ StatsUI = React.createClass(
           dom.h2 null, 'EVE: Year in Review'
           dom.div {className: 'whatIsThis'},
             "Your character's story told in charts and numbers based on aggregate data
-            from 2014 and 2013.  A preview of CREST data coming to TQ Soon."
+            from 2013 - 2015.  A preview of CREST data coming to TQ Soon."
           dom.div null, React.createElement(SSOLoginButton)
           dom.div {className: 'noAccountText'}, "Don't want to commit just yet? "
           dom.div null,
@@ -459,7 +458,7 @@ Header = React.createClass(
     return (event) =>
       @props.switchToYear year
   render: ->
-    years = [ 2014, 2013 ]
+    years = [ 2015, 2014, 2013 ]
     yearLis = []
     for year in years
       yearLis.push dom.li(null, dom.a({key: year, onClick: @onYearClick(year)}, year))
