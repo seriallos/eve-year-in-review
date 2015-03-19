@@ -1230,22 +1230,16 @@ PvePanel = React.createClass(
           description: 'Epic Arcs Completed'
           iconId: styleIconId 'epicArc'
         }
-        # these appear broken right now
-        #{
-        #  value: @props.stats.industryArcheologySuccesses
-        #  description: 'Relic Cans Hacked'
-        #  iconId: styleIconId 'relicCan'
-        #}
-        #{
-        #  value: @props.stats.industryHackingSuccesses
-        #  description: 'Data Cans Hacked'
-        #  iconId: styleIconId 'dataCan'
-        #}
+        {
+          value: @props.stats.industryHackingSuccesses
+          description: 'Data Cans Hacked'
+          iconId: styleIconId 'dataCan'
+        }
       ]
       return React.createElement(CalloutPanel, {
         title: 'PVE',
         callouts: callouts,
-        columns: 3
+        columns: 4
       })
     else
       return null
