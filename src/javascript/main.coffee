@@ -20,6 +20,13 @@ CONFIG =
     sso_client_id: '67a0cc0f68d34e77b9751f8c75dd2e31'
     crest_host: 'https://crest-tq.eveonline.com'
 
+# domain aliases
+client_aliases =
+  'www.spreadsheetsin.space': 'spreadsheetsin.space'
+
+for alias, target of client_aliases
+  CONFIG.dev.clients[alias] = CONFIG.dev.clients[target]
+
 client = CONFIG[env].clients[window.location.host]
 
 SSO_PROTO = 'https'
