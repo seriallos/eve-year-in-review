@@ -322,7 +322,7 @@ StatsUI = React.createClass(
       header
 
       # main content
-      dom.div {className: 'container translucent'},
+      dom.div {className: 'container translucent main'},
 
         header
 
@@ -357,7 +357,7 @@ StatsUI = React.createClass(
           dom.div {className: 'col-md-3'}, miscTooPvpStats
 
         # TODO: without spacer columns, things overlap for some reason.  fix that!
-        dom.div {className: 'row top-buffer'},
+        dom.div {className: 'row top-buffer repRow'},
           dom.div {className: 'col-md-3'}, repsGivenPanel
           dom.div {className: 'col-md-1'}, ''
           dom.div {className: 'col-md-3'}, repsReceivedPanel
@@ -497,7 +497,7 @@ CharacterInfoPanel = React.createClass(
     avgSession = Math.round(onlineMinutes/ @props.stats.characterSessionsStarted)
 
     dom.div {className: 'row'},
-      dom.div {className: 'col-md-3'},
+      dom.div {className: 'col-md-3 avatar'},
         React.createElement(CharacterAvatar, {id: @props.character.id})
       dom.div {className: 'col-md-9'},
         dom.div {className: 'row'},
@@ -953,7 +953,7 @@ DamageAnalogyPanel = React.createClass(
             overflow: 'hidden'
         stamps.push dom.div(divOpts, dom.img(imgOpts))
 
-      return dom.div {className: 'row'},
+      return dom.div {className: 'row damageAnalogy'},
         dom.div {className: 'dropdown'},
           dom.button {
             id: 'shipDropdown'
@@ -1230,22 +1230,16 @@ PvePanel = React.createClass(
           description: 'Epic Arcs Completed'
           iconId: styleIconId 'epicArc'
         }
-        # these appear broken right now
-        #{
-        #  value: @props.stats.industryArcheologySuccesses
-        #  description: 'Relic Cans Hacked'
-        #  iconId: styleIconId 'relicCan'
-        #}
-        #{
-        #  value: @props.stats.industryHackingSuccesses
-        #  description: 'Data Cans Hacked'
-        #  iconId: styleIconId 'dataCan'
-        #}
+        {
+          value: @props.stats.industryHackingSuccesses
+          description: 'Data Cans Hacked'
+          iconId: styleIconId 'dataCan'
+        }
       ]
       return React.createElement(CalloutPanel, {
         title: 'PVE',
         callouts: callouts,
-        columns: 3
+        columns: 4
       })
     else
       return null

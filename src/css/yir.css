@@ -4,11 +4,23 @@
   background-attachment: fixed;
   margin: 0 0 70px 0;
   padding: 0;
+  font-family: 'Open Sans', sans-serif;
+}
+
+h1,h2,h3{
+  font-family: 'Play', sans-serif;
+  text-transform: uppercase;
 }
 
 .yir-nav {
-  background-color: rgba(48, 48, 48, 0.8);
+  background-color: rgba(0, 0, 0, 0.8);
   height: 10px;
+  border-top: 1px solid #e29819;
+  color: gray;
+}
+
+.yir-nav img {
+  border: 1px solid rgba(48, 48, 48, 1);
 }
 
 .vert-center {
@@ -20,13 +32,32 @@
   justify-content: center;
 }
 
+.avatar img {
+  border: 1px solid #6e757b;
+  box-shadow: 0 8px 15px rgba(0,0,0,.5);
+  position: relative;
+  top: -30px;
+}
+
 .top-buffer {
   margin-top: 50px;
 }
 
-.translucent {
-  background-color: rgba(0, 0, 0, 0.4);
+.vert-center .translucent {
   padding: 40px;
+}
+
+.translucent {
+  background-color: rgba(110, 117, 123, 0.1);
+  border: 1px solid #6e757b;
+  box-shadow: 0 8px 15px rgba(0,0,0,.5);
+}
+
+.main {
+  position: relative;
+  margin-top: 75px;
+  margin-bottom: -70px;
+  padding-bottom: 140px;
 }
 
 .whatIsThis {
@@ -72,8 +103,11 @@
 
 div.circle {
   border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
+  position: relative;
+  top: 4px;
+  left: 8px;
 }
 
 .number {
@@ -108,4 +142,12 @@ div.circle {
   text-align: center;
   /* pull description up just a bit */
   margin-top: -8px;
+}
+
+.repRow {
+  margin-left: 15px;
+}
+
+.damageAnalogy {
+  margin-left: 10px;
 }
