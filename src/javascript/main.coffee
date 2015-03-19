@@ -33,6 +33,7 @@ d3 = require 'd3'
 $ = require 'jquery'
 _ = require 'lodash'
 numeral = require 'numeral'
+ga = require 'googleanalytics'
 
 qs = require 'querystring'
 urlParse = require('url').parse
@@ -144,9 +145,10 @@ StatsUI = React.createClass(
             @setState {character: char}
 
           # don't wait for character data, just call and load
-          @loadStatsYear(2014)
+          @loadStatsYear(2014, false)
 
-  loadStatsYear: (year) ->
+  loadStatsYear: (year, track = true) ->
+    ga 'send', 'pageview', "/#{year}"
     url = "#{@state.character.url}statistics/year/#{year}/"
     jrequest url, (err, data, xhr) =>
       if err and xhr.status == 404
@@ -156,6 +158,7 @@ StatsUI = React.createClass(
         @setState {stats: stats, year: year, ssoState: 'loaded', noData: false}
 
   loadSampleData: ->
+    ga 'send', 'pageview', '/sample'
     host = window.location.host
     proto = window.location.protocol
     sample = './bella.json'
