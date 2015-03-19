@@ -9,12 +9,14 @@ CONFIG =
       'localhost:3000':
         sso_client_id: '448241b523d24f0c947ea58a4443bb02'
         callback_url: 'http://localhost:3000'
+        yir_server_url: 'http://localhost:8081'
       'disda.in':
         sso_client_id: 'be843963a3cf4ed3a5de411f1b4a84d4'
         callback_url: 'http://disda.in/eve/yir/'
       'spreadsheetsin.space':
         sso_client_id: 'ee5517f79a684842b0a5cf599d752411'
         callback_url: 'https://spreadsheetsin.space/year-in-review/'
+        yir_server_url: 'http://api.spreadsheetsin.space:8081'
   live:
     sso_host: 'https://login.eveonline.com'
     sso_client_id: '67a0cc0f68d34e77b9751f8c75dd2e31'
@@ -147,10 +149,14 @@ StatsUI = React.createClass(
           # don't wait for character data, just call and load
           @loadStatsYear(2014, false)
 
+  getStats: (year, done) ->
+    url = "#{@state.character.url}statistics/year/#{year}/"
+    jrequest url, (err, data, xhr) ->
+      done(err, data, xhr)
+
   loadStatsYear: (year, track = true) ->
     ga 'send', 'pageview', "/year-in-review/#{year}"
-    url = "#{@state.character.url}statistics/year/#{year}/"
-    jrequest url, (err, data, xhr) =>
+    @getStats year, (err, data, xhr) =>
       if err and xhr.status == 404
         @setState {stats: null, year: year, ssoState: 'loaded', noData: true}
       else
@@ -174,6 +180,30 @@ StatsUI = React.createClass(
           id: 1412571394
         }
       }
+
+  generatePermalink: ->
+    console.log "permalinking action"
+    results = []
+    @getStats 2013, (err, data, xhr) =>
+      results.push data
+      @getStats 2014, (err, data, xhr) =>
+        results.push data
+        @getStats 2015, (err, data, xhr) =>
+          results.push data
+          url = "#{client.yir_server_url}/charstats/"
+          opts =
+            url: url
+            crossDomain: true
+            type: "POST"
+            error: (xhr, status, error) ->
+              console.error xhr.status
+              console.error(status)
+              console.error(error);
+            success: (data, xhr) ->
+              console.log "POST success"
+              console.log data
+          console.log opts
+          $.ajax(opts)
 
   renderInitialPage: ->
     return dom.div {className: 'vert-center'},
@@ -422,7 +452,8 @@ StatsUI = React.createClass(
         character: @state.character,
         year: @state.year,
         switchToYear: @loadStatsYear,
-        hideSwitch: @state.sample
+        hideSwitch: @state.sample,
+        onGeneratePermalink: @generatePermalink
       })
 
       if @state.noData
@@ -485,6 +516,8 @@ Header = React.createClass(
           dom.ul {className: 'nav navbar-nav'},
             dom.li null,
               yearDropdown unless @props.hideSwitch
+            dom.li null,
+              dom.a({onClick: @props.onGeneratePermalink}, "Generate Permalink") unless @props.hideSwitch
           dom.ul {className: 'nav navbar-nav navbar-right'},
             dom.li null,
               React.createElement(SSOLoginButton, {linkText: 'Change Character'})
