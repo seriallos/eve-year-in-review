@@ -53,6 +53,16 @@ class CharacterStats
     @combatDeathsTotal = @total 'combatDeaths'
     @kdRatioTotal = @combatKillsTotal / @combatDeathsTotal
 
+    @combatDeathsPodTotal = @combatDeathsPodHighSec +
+                            @combatDeathsPodLowSec +
+                            @combatDeathsPodNullSec +
+                            @combatDeathsPodWormhole
+
+    @combatKillsPodTotal = @combatKillsPodHighSec +
+                           @combatKillsPodLowSec +
+                           @combatKillsPodNullSec +
+                           @combatKillsPodWormhole
+
     @kdRatioHigh = @combatKillsHighSec / @combatDeathsHighSec
     @kdRatioLow = @combatKillsLowSec / @combatDeathsLowSec
     @kdRatioNull = @combatKillsNullSec / @combatDeathsNullSec
@@ -281,6 +291,22 @@ class CharacterStats
     combatDamageToPlayersCombatDroneNumShots:
       name: "Hits Dealt with Combat Drones"
       description: "The total number of hits made to other players using combat drones"
+      tags: ['damageDone','pvp']
+    combatDamageToPlayersFighterDroneAmount:
+      name: "Damage Dealt with Fighter Drones"
+      description: "The total amount damage dealt to other players using fighter drones"
+      tags: ['damageDone','pvp']
+    combatDamageToPlayersFighterDroneNumShots:
+      name: "Hits Dealt with Fighter Drones"
+      description: "The total number of hits made to other players using fighter drones"
+      tags: ['damageDone','pvp']
+    combatDamageToPlayersFighterBomberAmount:
+      name: "Damage Dealt with Fighter Drones"
+      description: "The total amount damage dealt to other players using fighter bombers"
+      tags: ['damageDone','pvp']
+    combatDamageToPlayersFighterBomberNumShots:
+      name: "Hits Dealt with Fighter Drones"
+      description: "The total number of hits made to other players using fighter bombers"
       tags: ['damageDone','pvp']
     combatDamageToPlayersBombAmount:
       name: "Damage Dealt with Bombs"
@@ -624,15 +650,15 @@ class CharacterStats
       name: "Veldspar Mined"
       description: "The total amount of Veldspar mined (units)"
       tags: []
-    moduleActivationsCloaking:
+    moduleActivationsCloakingDevice:
       name: "Times Cloaked"
       description: "The total number of cloak activations"
       tags: []
-    moduleActivationsCyno:
+    moduleActivationsCynosuralField:
       name: "Cynos Activated"
       description: "The total number of cyno activations"
       tags: []
-    moduleActivationsEwarDampener:
+    moduleActivationsRemoteSensorSamper:
       name: "Sensor Damps Used"
       description: "The total number of sensor dampener activations"
       tags: []
@@ -648,7 +674,7 @@ class CharacterStats
       name: "Energy Vampire Activations"
       description: "The total number of energy vampire activations"
       tags: []
-    moduleActivationsFleetAssist:
+    moduleActivationsGangCoordinator:
       name: "Links Activated"
       description: "The total number of gang link module activations"
       tags: []

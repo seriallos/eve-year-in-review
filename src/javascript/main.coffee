@@ -193,7 +193,7 @@ StatsUI = React.createClass(
     ga 'send', 'pageview', '/year-in-review/sample'
     host = window.location.host
     proto = window.location.protocol
-    sample = './bella.json'
+    sample = './sampledata/roigon.json'
     jrequest sample, (err, data, xhr) =>
       stats = {}
       for statYear, yearStats of data.aggregateYears
@@ -1305,17 +1305,17 @@ MiscModulePanel = React.createClass(
     if @props.stats
       callouts = [
         {
-          value: @props.stats.moduleActivationsCloaking
+          value: @props.stats.moduleActivationsCloakingDevice
           description: 'Activated Cloak'
           iconId: styleIconId 'cloak'
         }
         {
-          value: @props.stats.moduleActivationsCyno
+          value: @props.stats.moduleActivationsCynosuralField
           description: 'Cynos Lit'
           iconId: styleIconId 'cyno'
         }
         {
-          value: @props.stats.moduleActivationsFleetAssist
+          value: @props.stats.moduleActivationsGangCoordinator
           description: 'Activated Gang Link'
           iconId: styleIconId 'gangLink'
         }
@@ -1325,7 +1325,7 @@ MiscModulePanel = React.createClass(
           iconId: styleIconId 'ecm'
         }
         {
-          value: @props.stats.moduleActivationsEwarDampener
+          value: @props.stats.moduleActivationsRemoteSensorDamper
           description: 'Activated Sensor Damp'
           iconId: styleIconId 'damp'
         }
