@@ -1,24 +1,29 @@
 
-env = 'dev'
+env = 'live'
 
 CONFIG =
   dev:
     sso_host: 'https://sisilogin.testeveonline.com'
     crest_host: 'https://api-sisi.testeveonline.com'
+    stats_host: 'https://characterstats.tech.ccp.is'
     clients:
       'localhost:3000':
-        sso_client_id: '448241b523d24f0c947ea58a4443bb02'
+        sso_client_id: 'afee62d8af474d929663f26d00b46a5a'
         callback_url: 'http://localhost:3000'
-      'disda.in':
-        sso_client_id: 'be843963a3cf4ed3a5de411f1b4a84d4'
-        callback_url: 'http://disda.in/eve/yir/'
       'spreadsheetsin.space':
-        sso_client_id: 'ee5517f79a684842b0a5cf599d752411'
+        sso_client_id: '368228fbf2de48e1baf5937edccf7b48'
         callback_url: 'https://spreadsheetsin.space/year-in-review/'
   live:
     sso_host: 'https://login.eveonline.com'
-    sso_client_id: '67a0cc0f68d34e77b9751f8c75dd2e31'
     crest_host: 'https://crest-tq.eveonline.com'
+    stats_host: 'https://characterstats.tech.ccp.is'
+    clients:
+      'localhost:3000':
+        sso_client_id: 'afee62d8af474d929663f26d00b46a5a'
+        callback_url: 'http://localhost:3000'
+      'spreadsheetsin.space':
+        sso_client_id: '368228fbf2de48e1baf5937edccf7b48'
+        callback_url: 'https://spreadsheetsin.space/year-in-review/'
 
 # domain aliases
 client_aliases =
@@ -34,6 +39,7 @@ SSO_CALLBACK_URL = client?.callback_url
 SSO_HOST = CONFIG[env].sso_host
 SSO_CLIENT_ID = client?.sso_client_id
 CREST_HOST = CONFIG[env].crest_host
+STATS_HOST = CONFIG[env].stats_host
 
 React = require 'react'
 d3 = require 'd3'
@@ -156,13 +162,19 @@ StatsUI = React.createClass(
 
   loadStatsYear: (year, track = true) ->
     ga 'send', 'pageview', "/year-in-review/#{year}"
-    url = "#{@state.character.url}statistics/year/#{year}/"
-    jrequest url, (err, data, xhr) =>
-      if err and xhr.status == 404
-        @setState {stats: null, year: year, ssoState: 'loaded', noData: true}
-      else
-        stats = new CharacterStats(data)
-        @setState {stats: stats, year: year, ssoState: 'loaded', noData: false}
+    console.log('here');
+    url = "#{STATS_HOST}/v1/#{@state.character.id}/"
+    if (@state.ssoState != 'loaded')
+      jrequest url, (err, data, xhr) =>
+        if err and xhr.status == 404
+          @setState {allStats: null, stats: null, year: year, ssoState: 'loaded', noData: true}
+        else
+          stats = {}
+          for statYear, yearStats of data.aggregateYears
+            stats[statYear] = new CharacterStats(yearStats)
+          @setState {allStats: stats, stats: stats[year], year: year, ssoState: 'loaded', noData: false}
+    else
+      @setState {stats: @state.allStats[year], year: year}
 
   loadSampleData: ->
     ga 'send', 'pageview', '/year-in-review/sample'
@@ -170,10 +182,13 @@ StatsUI = React.createClass(
     proto = window.location.protocol
     sample = './bella.json'
     jrequest sample, (err, data, xhr) =>
-      stats = new CharacterStats(data)
+      stats = {}
+      for statYear, yearStats of data.aggregateYears
+        stats[statYear] = new CharacterStats(yearStats)
       @setState {
         sample: true
-        stats: stats,
+        allStats: stats,
+        stats: stats[2014],
         year: 2014,
         ssoState: 'loaded'
         character: {
@@ -288,8 +303,8 @@ StatsUI = React.createClass(
     iskMax = _.max [
       @state.stats?.iskIn
       @state.stats?.iskOut
-      @state.stats?.marketIskIn
-      @state.stats?.marketIskOut
+      @state.stats?.marketISKGained
+      @state.stats?.marketISKSpent
     ]
 
     totalIskPanel = React.createElement(TotalISKPanel, {
@@ -449,7 +464,7 @@ SSOLoginButton = React.createClass(
       response_type: 'token'
       redirect_uri: SSO_CALLBACK_URL
       client_id: SSO_CLIENT_ID
-      scope: 'publicData characterStatisticsRead'
+      scope: 'characterStatsRead'
       state: ''
 
     ssoUrl = "#{SSO_HOST}/oauth/authorize/?#{qs.stringify ssoParams}"
@@ -768,6 +783,10 @@ WeaponUsagePanel = React.createClass(
         value: @props.stats?.combatDamageToPlayersEnergyAmount
       }
       {
+        key: 'drone'
+        value: @props.stats?.combatDamageToPlayersCombatDroneAmount
+      }
+      {
         key: 'bomb'
         value: @props.stats?.combatDamageToPlayersBombAmount
       }
@@ -776,8 +795,12 @@ WeaponUsagePanel = React.createClass(
         value: @props.stats?.combatDamageToPlayersSmartBombAmount
       }
       {
-        key: 'fighter'
-        value: @props.stats?.combatDamageToPlayersFighterMissileAmount
+        key: 'fighterbomber'
+        value: @props.stats?.combatDamageToPlayersFighterBomberAmount
+      }
+      {
+        key: 'fighterdrone'
+        value: @props.stats?.combatDamageToPlayersFighterDroneAmount
       }
       {
         key: 'dd'
@@ -815,6 +838,10 @@ DamageTakenPanel = React.createClass(
         value: @props.stats?.combatDamageFromPlayersEnergyAmount
       }
       {
+        key: 'drone'
+        value: @props.stats?.combatDamageFromPlayersCombatDroneAmount
+      }
+      {
         key: 'bomb'
         value: @props.stats?.combatDamageFromPlayersBombAmount
       }
@@ -823,8 +850,12 @@ DamageTakenPanel = React.createClass(
         value: @props.stats?.combatDamageFromPlayersSmartBombAmount
       }
       {
-        key: 'fighter'
-        value: @props.stats?.combatDamageFromPlayersFighterMissileAmount
+        key: 'fighterbomber'
+        value: @props.stats?.combatDamageFromPlayersFighterBomberAmount
+      }
+      {
+        key: 'fighterdrone'
+        value: @props.stats?.combatDamageFromPlayersFighterDroneAmount
       }
       {
         key: 'dd'
@@ -1509,11 +1540,11 @@ MarketISKPanel = React.createClass(
     return [
       {
         key: 'iskIn'
-        value: @props.stats?.marketIskIn
+        value: @props.stats?.marketISKGained
       }
       {
         key: 'iskOut'
-        value: @props.stats?.marketIskOut
+        value: @props.stats?.marketISKSpent
       }
     ]
   render: ->
