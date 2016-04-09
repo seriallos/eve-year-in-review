@@ -438,75 +438,71 @@ class CharacterStats
       name: "Probe Scans"
       description: "The number of probe scans made"
       tags: []
-    industryArcheologySuccesses:
-      name: "Relic Cans Hacked"
-      description: "The number of successful archeology attempts"
-      tags: []
     industryHackingSuccesses:
       name: "Data Cans Hacked"
       description: "The number of successful hacking attempts"
       tags: []
-    industryRamJobsCompletedCopyBlueprint:
+    industryJobsCompletedCopyBlueprint:
       name: "Blueprints Copied"
       description: "The number of copy jobs completed"
       tags: []
-    industryRamJobsCompletedInvention:
+    industryJobsCompletedInvention:
       name: "Invention Jobs"
       description: "The number of invention jobs completed"
       tags: []
-    industryRamJobsCompletedManufacture:
+    industryJobsCompletedManufacture:
       name: "Manufacturing Jobs"
       description: "The total number of manufacturing jobs completed"
       tags: []
-    industryRamJobsCompletedManufactureAsteroidQuantity:
+    industryJobsCompletedManufactureAsteroidQuantity:
       name: "Mineral Compression Jobs"
       description: "The total units of"
       tags: []
-    industryRamJobsCompletedManufactureChargeQuantity:
+    industryJobsCompletedManufactureChargeQuantity:
       name: "Charges Produced"
       description: "The total units of charges produced"
       tags: []
-    industryRamJobsCompletedManufactureCommodityQuantity:
+    industryJobsCompletedManufactureCommodityQuantity:
       name: "Commodities Produced"
       description: "The total units of commodities produced"
       tags: []
-    industryRamJobsCompletedManufactureDeployableQuantity:
+    industryJobsCompletedManufactureDeployableQuantity:
       name: "Deployables Produced"
       description: "The total units of deployables produced"
       tags: []
-    industryRamJobsCompletedManufactureDroneQuantity:
+    industryJobsCompletedManufactureDroneQuantity:
       name: "Drones Produced"
       description: "The total units of drones produced"
       tags: []
-    industryRamJobsCompletedManufactureImplantQuantity:
+    industryJobsCompletedManufactureImplantQuantity:
       name: "Implants Produced"
       description: "The total units of implants produced"
       tags: []
-    industryRamJobsCompletedManufactureModuleQuantity:
+    industryJobsCompletedManufactureModuleQuantity:
       name: "Modules Produced"
       description: "The total units of modules produced"
       tags: []
-    industryRamJobsCompletedManufactureShipQuantity:
+    industryJobsCompletedManufactureShipQuantity:
       name: "Ships Produced"
       description: "The total units of ships produced"
       tags: []
-    industryRamJobsCompletedManufactureStructureQuantity:
+    industryJobsCompletedManufactureStructureQuantity:
       name: "Structures Produced"
       description: "The total units of structures produced"
       tags: []
-    industryRamJobsCompletedManufactureSubsystemQuantity:
+    industryJobsCompletedManufactureSubsystemQuantity:
       name: "Subsystems Produced"
       description: "The total units of subsystems produced"
       tags: []
-    industryRamJobsCompletedMaterialProductivity:
+    industryJobsCompletedMaterialProductivity:
       name: "ME Jobs"
       description: "The number of material efficiency jobs completed"
       tags: []
-    industryRamJobsCompletedReverseEngineering:
+    industryJobsCompletedReverseEngineering:
       name: "Reverse Engineering Jobs"
       description: "The number of reverse engineering jobs completed (merged into invention as of ?)"
       tags: []
-    industryRamJobsCompletedTimeProductivity:
+    industryJobsCompletedTimeProductivity:
       name: "TE Jobs"
       description: "The number of production efficiency jobs completed"
       tags: []

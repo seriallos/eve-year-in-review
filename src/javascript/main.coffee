@@ -158,11 +158,10 @@ StatsUI = React.createClass(
             @setState {character: char}
 
           # don't wait for character data, just call and load
-          @loadStatsYear(2014, false)
+          @loadStatsYear(2015, false)
 
   loadStatsYear: (year, track = true) ->
     ga 'send', 'pageview', "/year-in-review/#{year}"
-    console.log('here');
     url = "#{STATS_HOST}/v1/#{@state.character.id}/"
     if (@state.ssoState != 'loaded')
       jrequest url, (err, data, xhr) =>
@@ -170,10 +169,24 @@ StatsUI = React.createClass(
           @setState {allStats: null, stats: null, year: year, ssoState: 'loaded', noData: true}
         else
           stats = {}
+          maxYear = null
+          years = []
           for statYear, yearStats of data.aggregateYears
             stats[statYear] = new CharacterStats(yearStats)
-          @setState {allStats: stats, stats: stats[year], year: year, ssoState: 'loaded', noData: false}
+            if maxYear is null or statYear > maxYear
+                maxYear = statYear
+              years.push(statYear)
+          years.sort().reverse()
+          @setState {
+            years: years
+            allStats: stats
+            stats: stats[maxYear]
+            year: maxYear
+            ssoState: 'loaded'
+            noData: false
+          }
     else
+      # data already loaded, just switch to the chosen year
       @setState {stats: @state.allStats[year], year: year}
 
   loadSampleData: ->
@@ -203,7 +216,7 @@ StatsUI = React.createClass(
           dom.h2 null, 'EVE: Year in Review'
           dom.div {className: 'whatIsThis'},
             "Your character's story told in charts and numbers based on aggregate data
-            from 2013 - 2015.  A preview of CREST data coming to TQ Soon."
+            from 2014 onward."
           dom.div null, React.createElement(SSOLoginButton)
           dom.div {className: 'noAccountText'}, "Don't want to commit just yet? "
           dom.div null,
@@ -443,6 +456,7 @@ StatsUI = React.createClass(
       header = React.createElement(Header, {
         character: @state.character,
         year: @state.year,
+        years: @state.years,
         switchToYear: @loadStatsYear,
         hideSwitch: @state.sample
       })
@@ -483,7 +497,7 @@ Header = React.createClass(
     return (event) =>
       @props.switchToYear year
   render: ->
-    years = [ 2015, 2014, 2013 ]
+    years = @props.years or []
     yearLis = []
     for year in years
       yearLis.push dom.li(null, dom.a({key: year, onClick: @onYearClick(year)}, year))
@@ -1337,39 +1351,39 @@ IndustryJobsPanel = React.createClass(
     data = [
       {
         key: 'charge'
-        value: @props.stats?.industryRamJobsCompletedManufactureChargeQuantity
+        value: @props.stats?.industryJobsCompletedManufactureChargeQuantity
       }
       {
         key: 'commodity'
-        value: @props.stats?.industryRamJobsCompletedManufactureCommodityQuantity
+        value: @props.stats?.industryJobsCompletedManufactureCommodityQuantity
       }
       {
         key: 'deployable'
-        value: @props.stats?.industryRamJobsCompletedManufactureDeployableQuantity
+        value: @props.stats?.industryJobsCompletedManufactureDeployableQuantity
       }
       {
         key: 'drone'
-        value: @props.stats?.industryRamJobsCompletedManufactureDroneQuantity
+        value: @props.stats?.industryJobsCompletedManufactureDroneQuantity
       }
       {
         key: 'implant'
-        value: @props.stats?.industryRamJobsCompletedManufactureImplantQuantity
+        value: @props.stats?.industryJobsCompletedManufactureImplantQuantity
       }
       {
         key: 'module'
-        value: @props.stats?.industryRamJobsCompletedManufactureModuleQuantity
+        value: @props.stats?.industryJobsCompletedManufactureModuleQuantity
       }
       {
         key: 'ship'
-        value: @props.stats?.industryRamJobsCompletedManufactureShipQuantity
+        value: @props.stats?.industryJobsCompletedManufactureShipQuantity
       }
       {
         key: 'structure'
-        value: @props.stats?.industryRamJobsCompletedManufactureStructureQuantity
+        value: @props.stats?.industryJobsCompletedManufactureStructureQuantity
       }
       {
         key: 'subsystem'
-        value: @props.stats?.industryRamJobsCompletedManufactureSubsystemQuantity
+        value: @props.stats?.industryJobsCompletedManufactureSubsystemQuantity
       }
     ]
     return data
@@ -1385,22 +1399,22 @@ IndustryBlueprintPanel = React.createClass(
     if @props.stats
       callouts = [
         {
-          value: @props.stats.industryRamJobsCompletedCopyBlueprint
+          value: @props.stats.industryJobsCompletedCopyBlueprint
           description: 'Blueprints Copied'
           icon: 'jobCopy'
         }
         {
-          value: @props.stats.industryRamJobsCompletedMaterialProductivity
+          value: @props.stats.industryJobsCompletedMaterialProductivity
           description: 'ME Jobs'
           icon: 'jobMe'
         }
         {
-          value: @props.stats.industryRamJobsCompletedTimeProductivity
+          value: @props.stats.industryJobsCompletedTimeProductivity
           description: 'TE Jobs'
           icon: 'jobTe'
         }
         {
-          value: @props.stats.industryRamJobsCompletedInvention
+          value: @props.stats.industryJobsCompletedInvention
           description: 'Invention Jobs'
           icon: 'jobInvention'
         }
