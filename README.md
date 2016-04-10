@@ -6,15 +6,11 @@ Showcase of new character stats for EVE Fanfest 2015
 Notes
 -----
 
-* By default, the application is entirely client side and so no data is sent to my server.
-    * If you choose to share your stats, your data will be stored on my server so that it
-      can be retrieved later as a permalink.  My app/server do not have access to your
-      credentials, only the data retrieved and possibly an access token with limited
-      rights.
-    * Google analytics is used for basic traffic tracking.
-* https://sisilogin.testeveonline.com/ is CCP's Sisi Single Sign On site.  It's
-  trustworthy.  Once the API is available from TQ Crest this app will be switched over.
-  Sisi is just being used temporarily until it's rolled out for real.
+* The application is entirely client side - none of your data is saved on my
+  server.
+* Google analytics is used for basic traffic tracking.
+* The site uses CCP's single sign on for account validation so your credentials
+  never get near my server/code.
 * Built primarily using
     * React
     * d3
