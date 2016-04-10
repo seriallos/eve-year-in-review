@@ -193,7 +193,6 @@ StatsUI = React.createClass(
     ga 'send', 'pageview', '/year-in-review/sample'
     host = window.location.host
     proto = window.location.protocol
-    sample = './sampledata/roigon.json'
     sample = './bella.json'
     jrequest sample, (err, data, xhr) =>
       stats = {}
