@@ -194,6 +194,7 @@ StatsUI = React.createClass(
     host = window.location.host
     proto = window.location.protocol
     sample = './sampledata/roigon.json'
+    sample = './bella.json'
     jrequest sample, (err, data, xhr) =>
       stats = {}
       for statYear, yearStats of data.aggregateYears
@@ -1320,7 +1321,7 @@ MiscModulePanel = React.createClass(
           iconId: styleIconId 'gangLink'
         }
         {
-          value: @props.stats.moduleActivationsEwarECM
+          value: @props.stats.moduleActivationsECM
           description: 'Violated Space Bushido'
           iconId: styleIconId 'ecm'
         }
@@ -1330,12 +1331,12 @@ MiscModulePanel = React.createClass(
           iconId: styleIconId 'damp'
         }
         {
-          value: @props.stats.moduleActivationsEwarTargetPainter
+          value: @props.stats.moduleActivationsTargetPainter
           description: 'Activated Target Painter'
           iconId: styleIconId 'painter'
         }
         {
-          value: @props.stats.moduleActivationsEwarVampire
+          value: @props.stats.moduleActivationsEnergyVampire
           description: 'Activated NOS'
           iconId: styleIconId 'nos'
         }

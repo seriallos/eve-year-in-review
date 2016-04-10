@@ -662,15 +662,15 @@ class CharacterStats
       name: "Sensor Damps Used"
       description: "The total number of sensor dampener activations"
       tags: []
-    moduleActivationsEwarECM:
+    moduleActivationsECM:
       name: "ECM Activations"
       description: "The total number of ECM activations"
       tags: []
-    moduleActivationsEwarTargetPainter:
+    moduleActivationsTargetPainter:
       name: "Target Painter Activations"
       description: "The total number of target painter activations"
       tags: []
-    moduleActivationsEwarVampire:
+    moduleActivationsEnergyVampire:
       name: "Energy Vampire Activations"
       description: "The total number of energy vampire activations"
       tags: []
