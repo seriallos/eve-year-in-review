@@ -23,7 +23,11 @@ STYLES =
     label: 'Smart Bomb'
     color: 'purple'
     iconId: 3993
-  fighter:
+  fighterdrone:
+    label: 'Fighter'
+    color: 'orange'
+    iconId: 1
+  fighterbomber:
     label: 'Fighter Bomber'
     color: 'orange'
     iconId: 1

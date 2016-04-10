@@ -46,13 +46,22 @@ class CharacterStats
   calcDerived: ->
     # fix a few stats
     @iskOut = -(@iskOut)
-    @marketIskOut = -(@marketIskOut)
     # derive some stats
     @averageSessionLength = @characterMinutes / @characterSessionsStarted
 
     @combatKillsTotal = @total 'combatKills'
     @combatDeathsTotal = @total 'combatDeaths'
     @kdRatioTotal = @combatKillsTotal / @combatDeathsTotal
+
+    @combatDeathsPodTotal = @combatDeathsPodHighSec +
+                            @combatDeathsPodLowSec +
+                            @combatDeathsPodNullSec +
+                            @combatDeathsPodWormhole
+
+    @combatKillsPodTotal = @combatKillsPodHighSec +
+                           @combatKillsPodLowSec +
+                           @combatKillsPodNullSec +
+                           @combatKillsPodWormhole
 
     @kdRatioHigh = @combatKillsHighSec / @combatDeathsHighSec
     @kdRatioLow = @combatKillsLowSec / @combatDeathsLowSec
@@ -61,13 +70,15 @@ class CharacterStats
 
     @travelDistanceWarpedTotal = @total 'travelDistanceWarped'
 
-    @totalDamageDealt = @combatDamageToPlayersHybridAmount +
-                        @combatDamageToPlayersProjectileAmount +
+    @totalDamageDealt = @combatDamageToPlayersBombAmount +
+                        @combatDamageToPlayersCombatDroneAmount +
                         @combatDamageToPlayersEnergyAmount +
+                        @combatDamageToPlayersFighterBomberAmount +
+                        @combatDamageToPlayersFighterDroneAmount +
+                        @combatDamageToPlayersHybridAmount +
                         @combatDamageToPlayersMissileAmount +
-                        @combatDamageToPlayersBombAmount +
+                        @combatDamageToPlayersProjectileAmount +
                         @combatDamageToPlayersSmartBombAmount +
-                        @combatDamageToPlayersFighterMissileAmount +
                         @combatDamageToPlayersSuperAmount
 
     @iskSpentPercent = 100 * (@iskOut / @iskIn)
@@ -209,13 +220,29 @@ class CharacterStats
       name: "Hits Taken from Lasers"
       description: "The total number of hits taken from laser turrets"
       tags: ['damageTaken','pvp']
-    combatDamageFromPlayersFighterMissileAmount:
+    combatDamageFromPlayersCombatDroneAmount:
+      name: "Damage Taken from Combat Drones"
+      description: "The total damage taken from combat drones"
+      tags: ['damageTaken','pvp']
+    combatDamageFromPlayersCombatDroneNumShots:
+      name: "Hits Taken from Combat Drones"
+      description: "The total number of hits taken from combat drones"
+      tags: ['damageTaken','pvp']
+    combatDamageFromPlayersFighterBomberAmount:
       name: "Damage Taken from Fighter Bombers"
       description: "The total damage taken from fighter bombers"
       tags: ['damageTaken','pvp']
-    combatDamageFromPlayersFighterMissileNumShots:
+    combatDamageFromPlayersFighterBomberNumShots:
       name: "Hits Taken from Fighter Bombers"
       description: "The total number of hits taken from fighter bombers"
+      tags: ['damageTaken','pvp']
+    combatDamageFromPlayersFighterDroneAmount:
+      name: "Damage Taken from Fighter Drones"
+      description: "The total damage taken from fighter drones"
+      tags: ['damageTaken','pvp']
+    combatDamageFromPlayersFighterDroneNumShots:
+      name: "Hits Taken from Fighter Drones"
+      description: "The total number of hits taken from fighter drones"
       tags: ['damageTaken','pvp']
     combatDamageFromPlayersHybridAmount:
       name: "Damage Taken from Hybrids"
@@ -257,6 +284,30 @@ class CharacterStats
       name: "Hits Taken from Doomsdays"
       description: "The total number of hits taken from doomsday devices"
       tags: ['damageDone','pvp']
+    combatDamageToPlayersCombatDroneAmount:
+      name: "Damage Dealt with Combat Drones"
+      description: "The total amount damage dealt to other players using combat drones"
+      tags: ['damageDone','pvp']
+    combatDamageToPlayersCombatDroneNumShots:
+      name: "Hits Dealt with Combat Drones"
+      description: "The total number of hits made to other players using combat drones"
+      tags: ['damageDone','pvp']
+    combatDamageToPlayersFighterDroneAmount:
+      name: "Damage Dealt with Fighter Drones"
+      description: "The total amount damage dealt to other players using fighter drones"
+      tags: ['damageDone','pvp']
+    combatDamageToPlayersFighterDroneNumShots:
+      name: "Hits Dealt with Fighter Drones"
+      description: "The total number of hits made to other players using fighter drones"
+      tags: ['damageDone','pvp']
+    combatDamageToPlayersFighterBomberAmount:
+      name: "Damage Dealt with Fighter Drones"
+      description: "The total amount damage dealt to other players using fighter bombers"
+      tags: ['damageDone','pvp']
+    combatDamageToPlayersFighterBomberNumShots:
+      name: "Hits Dealt with Fighter Drones"
+      description: "The total number of hits made to other players using fighter bombers"
+      tags: ['damageDone','pvp']
     combatDamageToPlayersBombAmount:
       name: "Damage Dealt with Bombs"
       description: "The total amount damage dealt to other players using bombs"
@@ -272,14 +323,6 @@ class CharacterStats
     combatDamageToPlayersEnergyNumShots:
       name: "Number of Laser Shots"
       description: "The total number of shots made with laser turrets"
-      tags: []
-    combatDamageToPlayersFighterMissileAmount:
-      name: "Damage Dealt with Fighter Bombers"
-      description: "The total amount damage dealt to other players using fighter bombers"
-      tags: []
-    combatDamageToPlayersFighterMissileNumShots:
-      name: "Number of Fighter Bomber Shots"
-      description: "The total number of shots made with fighter bombers"
       tags: []
     combatDamageToPlayersHybridAmount:
       name: "Damage Dealt with Hybrids"
@@ -421,75 +464,71 @@ class CharacterStats
       name: "Probe Scans"
       description: "The number of probe scans made"
       tags: []
-    industryArcheologySuccesses:
-      name: "Relic Cans Hacked"
-      description: "The number of successful archeology attempts"
-      tags: []
     industryHackingSuccesses:
       name: "Data Cans Hacked"
       description: "The number of successful hacking attempts"
       tags: []
-    industryRamJobsCompletedCopyBlueprint:
+    industryJobsCompletedCopyBlueprint:
       name: "Blueprints Copied"
       description: "The number of copy jobs completed"
       tags: []
-    industryRamJobsCompletedInvention:
+    industryJobsCompletedInvention:
       name: "Invention Jobs"
       description: "The number of invention jobs completed"
       tags: []
-    industryRamJobsCompletedManufacture:
+    industryJobsCompletedManufacture:
       name: "Manufacturing Jobs"
       description: "The total number of manufacturing jobs completed"
       tags: []
-    industryRamJobsCompletedManufactureAsteroidQuantity:
+    industryJobsCompletedManufactureAsteroidQuantity:
       name: "Mineral Compression Jobs"
       description: "The total units of"
       tags: []
-    industryRamJobsCompletedManufactureChargeQuantity:
+    industryJobsCompletedManufactureChargeQuantity:
       name: "Charges Produced"
       description: "The total units of charges produced"
       tags: []
-    industryRamJobsCompletedManufactureCommodityQuantity:
+    industryJobsCompletedManufactureCommodityQuantity:
       name: "Commodities Produced"
       description: "The total units of commodities produced"
       tags: []
-    industryRamJobsCompletedManufactureDeployableQuantity:
+    industryJobsCompletedManufactureDeployableQuantity:
       name: "Deployables Produced"
       description: "The total units of deployables produced"
       tags: []
-    industryRamJobsCompletedManufactureDroneQuantity:
+    industryJobsCompletedManufactureDroneQuantity:
       name: "Drones Produced"
       description: "The total units of drones produced"
       tags: []
-    industryRamJobsCompletedManufactureImplantQuantity:
+    industryJobsCompletedManufactureImplantQuantity:
       name: "Implants Produced"
       description: "The total units of implants produced"
       tags: []
-    industryRamJobsCompletedManufactureModuleQuantity:
+    industryJobsCompletedManufactureModuleQuantity:
       name: "Modules Produced"
       description: "The total units of modules produced"
       tags: []
-    industryRamJobsCompletedManufactureShipQuantity:
+    industryJobsCompletedManufactureShipQuantity:
       name: "Ships Produced"
       description: "The total units of ships produced"
       tags: []
-    industryRamJobsCompletedManufactureStructureQuantity:
+    industryJobsCompletedManufactureStructureQuantity:
       name: "Structures Produced"
       description: "The total units of structures produced"
       tags: []
-    industryRamJobsCompletedManufactureSubsystemQuantity:
+    industryJobsCompletedManufactureSubsystemQuantity:
       name: "Subsystems Produced"
       description: "The total units of subsystems produced"
       tags: []
-    industryRamJobsCompletedMaterialProductivity:
+    industryJobsCompletedMaterialProductivity:
       name: "ME Jobs"
       description: "The number of material efficiency jobs completed"
       tags: []
-    industryRamJobsCompletedReverseEngineering:
+    industryJobsCompletedReverseEngineering:
       name: "Reverse Engineering Jobs"
       description: "The number of reverse engineering jobs completed (merged into invention as of ?)"
       tags: []
-    industryRamJobsCompletedTimeProductivity:
+    industryJobsCompletedTimeProductivity:
       name: "TE Jobs"
       description: "The number of production efficiency jobs completed"
       tags: []
@@ -498,11 +537,11 @@ class CharacterStats
       name: "Items Trashed"
       description: "The number of items trashed"
       tags: []
-    marketIskIn:
+    marketISKGained:
       name: "ISK Received from Sell Orders"
       description: "The amount of isk from sell-orders"
       tags: []
-    marketIskOut:
+    marketISKSpent:
       name: "ISK Spent on Buy Orders"
       description: "The amount of isk from buy-orders"
       tags: []
@@ -534,14 +573,6 @@ class CharacterStats
     marketDeliverCourierContract:
       name: "Courier Contracts Delivered"
       description: "The number of courier contracts delivered"
-      tags: []
-    marketISKGained:
-      description: "REMOVE: historical data is bugged, supposed to take only sell orders to other players"
-      disabled: true
-      tags: []
-    marketISKSpent:
-      description: "REMOVE: historical data is bugged, supposed to take only buy orders to other players"
-      disabled: true
       tags: []
     marketModifyMarketOrder:
       name: "Orders Modified"
@@ -619,31 +650,31 @@ class CharacterStats
       name: "Veldspar Mined"
       description: "The total amount of Veldspar mined (units)"
       tags: []
-    moduleActivationsCloaking:
+    moduleActivationsCloakingDevice:
       name: "Times Cloaked"
       description: "The total number of cloak activations"
       tags: []
-    moduleActivationsCyno:
+    moduleActivationsCynosuralField:
       name: "Cynos Activated"
       description: "The total number of cyno activations"
       tags: []
-    moduleActivationsEwarDampener:
+    moduleActivationsRemoteSensorSamper:
       name: "Sensor Damps Used"
       description: "The total number of sensor dampener activations"
       tags: []
-    moduleActivationsEwarECM:
+    moduleActivationsECM:
       name: "ECM Activations"
       description: "The total number of ECM activations"
       tags: []
-    moduleActivationsEwarTargetPainter:
+    moduleActivationsTargetPainter:
       name: "Target Painter Activations"
       description: "The total number of target painter activations"
       tags: []
-    moduleActivationsEwarVampire:
+    moduleActivationsEnergyVampire:
       name: "Energy Vampire Activations"
       description: "The total number of energy vampire activations"
       tags: []
-    moduleActivationsFleetAssist:
+    moduleActivationsGangCoordinator:
       name: "Links Activated"
       description: "The total number of gang link module activations"
       tags: []

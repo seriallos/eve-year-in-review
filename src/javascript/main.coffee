@@ -1,24 +1,29 @@
 
-env = 'dev'
+env = 'live'
 
 CONFIG =
   dev:
     sso_host: 'https://sisilogin.testeveonline.com'
     crest_host: 'https://api-sisi.testeveonline.com'
+    stats_host: 'https://characterstats.tech.ccp.is'
     clients:
       'localhost:3000':
-        sso_client_id: '448241b523d24f0c947ea58a4443bb02'
+        sso_client_id: 'afee62d8af474d929663f26d00b46a5a'
         callback_url: 'http://localhost:3000'
-      'disda.in':
-        sso_client_id: 'be843963a3cf4ed3a5de411f1b4a84d4'
-        callback_url: 'http://disda.in/eve/yir/'
       'spreadsheetsin.space':
-        sso_client_id: 'ee5517f79a684842b0a5cf599d752411'
+        sso_client_id: '368228fbf2de48e1baf5937edccf7b48'
         callback_url: 'https://spreadsheetsin.space/year-in-review/'
   live:
     sso_host: 'https://login.eveonline.com'
-    sso_client_id: '67a0cc0f68d34e77b9751f8c75dd2e31'
     crest_host: 'https://crest-tq.eveonline.com'
+    stats_host: 'https://characterstats.tech.ccp.is'
+    clients:
+      'localhost:3000':
+        sso_client_id: 'afee62d8af474d929663f26d00b46a5a'
+        callback_url: 'http://localhost:3000'
+      'spreadsheetsin.space':
+        sso_client_id: '368228fbf2de48e1baf5937edccf7b48'
+        callback_url: 'https://spreadsheetsin.space/year-in-review/'
 
 # domain aliases
 client_aliases =
@@ -34,6 +39,7 @@ SSO_CALLBACK_URL = client?.callback_url
 SSO_HOST = CONFIG[env].sso_host
 SSO_CLIENT_ID = client?.sso_client_id
 CREST_HOST = CONFIG[env].crest_host
+STATS_HOST = CONFIG[env].stats_host
 
 React = require 'react'
 d3 = require 'd3'
@@ -152,17 +158,36 @@ StatsUI = React.createClass(
             @setState {character: char}
 
           # don't wait for character data, just call and load
-          @loadStatsYear(2014, false)
+          @loadStatsYear(2015, false)
 
   loadStatsYear: (year, track = true) ->
     ga 'send', 'pageview', "/year-in-review/#{year}"
-    url = "#{@state.character.url}statistics/year/#{year}/"
-    jrequest url, (err, data, xhr) =>
-      if err and xhr.status == 404
-        @setState {stats: null, year: year, ssoState: 'loaded', noData: true}
-      else
-        stats = new CharacterStats(data)
-        @setState {stats: stats, year: year, ssoState: 'loaded', noData: false}
+    url = "#{STATS_HOST}/v1/#{@state.character.id}/"
+    if (@state.ssoState != 'loaded')
+      jrequest url, (err, data, xhr) =>
+        if err and xhr.status == 404
+          @setState {allStats: null, stats: null, year: year, ssoState: 'loaded', noData: true}
+        else
+          stats = {}
+          maxYear = null
+          years = []
+          for statYear, yearStats of data.aggregateYears
+            stats[statYear] = new CharacterStats(yearStats)
+            if maxYear is null or statYear > maxYear
+                maxYear = statYear
+              years.push(statYear)
+          years.sort().reverse()
+          @setState {
+            years: years
+            allStats: stats
+            stats: stats[maxYear]
+            year: maxYear
+            ssoState: 'loaded'
+            noData: false
+          }
+    else
+      # data already loaded, just switch to the chosen year
+      @setState {stats: @state.allStats[year], year: year}
 
   loadSampleData: ->
     ga 'send', 'pageview', '/year-in-review/sample'
@@ -170,10 +195,13 @@ StatsUI = React.createClass(
     proto = window.location.protocol
     sample = './bella.json'
     jrequest sample, (err, data, xhr) =>
-      stats = new CharacterStats(data)
+      stats = {}
+      for statYear, yearStats of data.aggregateYears
+        stats[statYear] = new CharacterStats(yearStats)
       @setState {
         sample: true
-        stats: stats,
+        allStats: stats,
+        stats: stats[2014],
         year: 2014,
         ssoState: 'loaded'
         character: {
@@ -188,7 +216,7 @@ StatsUI = React.createClass(
           dom.h2 null, 'EVE: Year in Review'
           dom.div {className: 'whatIsThis'},
             "Your character's story told in charts and numbers based on aggregate data
-            from 2013 - 2015.  A preview of CREST data coming to TQ Soon."
+            from 2014 onward."
           dom.div null, React.createElement(SSOLoginButton)
           dom.div {className: 'noAccountText'}, "Don't want to commit just yet? "
           dom.div null,
@@ -288,8 +316,8 @@ StatsUI = React.createClass(
     iskMax = _.max [
       @state.stats?.iskIn
       @state.stats?.iskOut
-      @state.stats?.marketIskIn
-      @state.stats?.marketIskOut
+      @state.stats?.marketISKGained
+      @state.stats?.marketISKSpent
     ]
 
     totalIskPanel = React.createElement(TotalISKPanel, {
@@ -428,6 +456,7 @@ StatsUI = React.createClass(
       header = React.createElement(Header, {
         character: @state.character,
         year: @state.year,
+        years: @state.years,
         switchToYear: @loadStatsYear,
         hideSwitch: @state.sample
       })
@@ -449,7 +478,7 @@ SSOLoginButton = React.createClass(
       response_type: 'token'
       redirect_uri: SSO_CALLBACK_URL
       client_id: SSO_CLIENT_ID
-      scope: 'publicData characterStatisticsRead'
+      scope: 'characterStatsRead'
       state: ''
 
     ssoUrl = "#{SSO_HOST}/oauth/authorize/?#{qs.stringify ssoParams}"
@@ -468,7 +497,7 @@ Header = React.createClass(
     return (event) =>
       @props.switchToYear year
   render: ->
-    years = [ 2015, 2014, 2013 ]
+    years = @props.years or []
     yearLis = []
     for year in years
       yearLis.push dom.li(null, dom.a({key: year, onClick: @onYearClick(year)}, year))
@@ -768,6 +797,10 @@ WeaponUsagePanel = React.createClass(
         value: @props.stats?.combatDamageToPlayersEnergyAmount
       }
       {
+        key: 'drone'
+        value: @props.stats?.combatDamageToPlayersCombatDroneAmount
+      }
+      {
         key: 'bomb'
         value: @props.stats?.combatDamageToPlayersBombAmount
       }
@@ -776,8 +809,12 @@ WeaponUsagePanel = React.createClass(
         value: @props.stats?.combatDamageToPlayersSmartBombAmount
       }
       {
-        key: 'fighter'
-        value: @props.stats?.combatDamageToPlayersFighterMissileAmount
+        key: 'fighterbomber'
+        value: @props.stats?.combatDamageToPlayersFighterBomberAmount
+      }
+      {
+        key: 'fighterdrone'
+        value: @props.stats?.combatDamageToPlayersFighterDroneAmount
       }
       {
         key: 'dd'
@@ -815,6 +852,10 @@ DamageTakenPanel = React.createClass(
         value: @props.stats?.combatDamageFromPlayersEnergyAmount
       }
       {
+        key: 'drone'
+        value: @props.stats?.combatDamageFromPlayersCombatDroneAmount
+      }
+      {
         key: 'bomb'
         value: @props.stats?.combatDamageFromPlayersBombAmount
       }
@@ -823,8 +864,12 @@ DamageTakenPanel = React.createClass(
         value: @props.stats?.combatDamageFromPlayersSmartBombAmount
       }
       {
-        key: 'fighter'
-        value: @props.stats?.combatDamageFromPlayersFighterMissileAmount
+        key: 'fighterbomber'
+        value: @props.stats?.combatDamageFromPlayersFighterBomberAmount
+      }
+      {
+        key: 'fighterdrone'
+        value: @props.stats?.combatDamageFromPlayersFighterDroneAmount
       }
       {
         key: 'dd'
@@ -1260,37 +1305,37 @@ MiscModulePanel = React.createClass(
     if @props.stats
       callouts = [
         {
-          value: @props.stats.moduleActivationsCloaking
+          value: @props.stats.moduleActivationsCloakingDevice
           description: 'Activated Cloak'
           iconId: styleIconId 'cloak'
         }
         {
-          value: @props.stats.moduleActivationsCyno
+          value: @props.stats.moduleActivationsCynosuralField
           description: 'Cynos Lit'
           iconId: styleIconId 'cyno'
         }
         {
-          value: @props.stats.moduleActivationsFleetAssist
+          value: @props.stats.moduleActivationsGangCoordinator
           description: 'Activated Gang Link'
           iconId: styleIconId 'gangLink'
         }
         {
-          value: @props.stats.moduleActivationsEwarECM
+          value: @props.stats.moduleActivationsECM
           description: 'Violated Space Bushido'
           iconId: styleIconId 'ecm'
         }
         {
-          value: @props.stats.moduleActivationsEwarDampener
+          value: @props.stats.moduleActivationsRemoteSensorDamper
           description: 'Activated Sensor Damp'
           iconId: styleIconId 'damp'
         }
         {
-          value: @props.stats.moduleActivationsEwarTargetPainter
+          value: @props.stats.moduleActivationsTargetPainter
           description: 'Activated Target Painter'
           iconId: styleIconId 'painter'
         }
         {
-          value: @props.stats.moduleActivationsEwarVampire
+          value: @props.stats.moduleActivationsEnergyVampire
           description: 'Activated NOS'
           iconId: styleIconId 'nos'
         }
@@ -1306,39 +1351,39 @@ IndustryJobsPanel = React.createClass(
     data = [
       {
         key: 'charge'
-        value: @props.stats?.industryRamJobsCompletedManufactureChargeQuantity
+        value: @props.stats?.industryJobsCompletedManufactureChargeQuantity
       }
       {
         key: 'commodity'
-        value: @props.stats?.industryRamJobsCompletedManufactureCommodityQuantity
+        value: @props.stats?.industryJobsCompletedManufactureCommodityQuantity
       }
       {
         key: 'deployable'
-        value: @props.stats?.industryRamJobsCompletedManufactureDeployableQuantity
+        value: @props.stats?.industryJobsCompletedManufactureDeployableQuantity
       }
       {
         key: 'drone'
-        value: @props.stats?.industryRamJobsCompletedManufactureDroneQuantity
+        value: @props.stats?.industryJobsCompletedManufactureDroneQuantity
       }
       {
         key: 'implant'
-        value: @props.stats?.industryRamJobsCompletedManufactureImplantQuantity
+        value: @props.stats?.industryJobsCompletedManufactureImplantQuantity
       }
       {
         key: 'module'
-        value: @props.stats?.industryRamJobsCompletedManufactureModuleQuantity
+        value: @props.stats?.industryJobsCompletedManufactureModuleQuantity
       }
       {
         key: 'ship'
-        value: @props.stats?.industryRamJobsCompletedManufactureShipQuantity
+        value: @props.stats?.industryJobsCompletedManufactureShipQuantity
       }
       {
         key: 'structure'
-        value: @props.stats?.industryRamJobsCompletedManufactureStructureQuantity
+        value: @props.stats?.industryJobsCompletedManufactureStructureQuantity
       }
       {
         key: 'subsystem'
-        value: @props.stats?.industryRamJobsCompletedManufactureSubsystemQuantity
+        value: @props.stats?.industryJobsCompletedManufactureSubsystemQuantity
       }
     ]
     return data
@@ -1354,22 +1399,22 @@ IndustryBlueprintPanel = React.createClass(
     if @props.stats
       callouts = [
         {
-          value: @props.stats.industryRamJobsCompletedCopyBlueprint
+          value: @props.stats.industryJobsCompletedCopyBlueprint
           description: 'Blueprints Copied'
           icon: 'jobCopy'
         }
         {
-          value: @props.stats.industryRamJobsCompletedMaterialProductivity
+          value: @props.stats.industryJobsCompletedMaterialProductivity
           description: 'ME Jobs'
           icon: 'jobMe'
         }
         {
-          value: @props.stats.industryRamJobsCompletedTimeProductivity
+          value: @props.stats.industryJobsCompletedTimeProductivity
           description: 'TE Jobs'
           icon: 'jobTe'
         }
         {
-          value: @props.stats.industryRamJobsCompletedInvention
+          value: @props.stats.industryJobsCompletedInvention
           description: 'Invention Jobs'
           icon: 'jobInvention'
         }
@@ -1509,11 +1554,11 @@ MarketISKPanel = React.createClass(
     return [
       {
         key: 'iskIn'
-        value: @props.stats?.marketIskIn
+        value: @props.stats?.marketISKGained
       }
       {
         key: 'iskOut'
-        value: @props.stats?.marketIskOut
+        value: @props.stats?.marketISKSpent
       }
     ]
   render: ->
